@@ -161,6 +161,7 @@
   <div class="card">
     <h2>💡 Produits locaux suggérés</h2>
     <div class="cat-tabs" id="cat-tabs"></div>
+    <input type="text" id="sugg-search" placeholder="🔎 Filtrer les produits…" style="margin-bottom:10px">
     <div class="suggestions" id="suggestions"></div>
     <p style="font-size:.75rem;color:var(--muted);margin-top:10px">
       Cliquez sur un produit pour l'ajouter à votre liste. Les suggestions dépendent de la zone choisie.
@@ -375,15 +376,15 @@ const COUNTRIES = [
   ]},
 ];
 
-// ---------- Catégories nutritionnelles ----------
+// ---------- Catalogue produits ----------
 const CATEGORIES = {
-  "Féculents":      ["Pâtes complètes", "Riz", "Pain complet", "Pain de seigle", "Pommes de terre", "Couscous", "Boulgour", "Lentilles vertes du Puy", "Haricots", "Choucroute", "Flocons d'avoine", "Igname", "Patate douce", "Maïs"],
-  "Protéines":      ["Sardines", "Maquereau", "Poulet fermier", "Œufs", "Jambon d'Auvergne", "Confit de canard", "Lentilles vertes du Puy", "Poisson frais", "Crevettes grises", "Escalope de veau", "Anchois", "Tofu", "Fruits secs", "Noix", "Haricots tarbais"],
-  "Légumes":        ["Tomates", "Courgettes", "Poireaux", "Carottes", "Chou-fleur", "Endives", "Betteraves", "Aubergines", "Poivrons", "Salade verte", "Chou", "Christophine", "Oignons de Roscoff"],
-  "Fruits":         ["Pommes", "Poires", "Melon", "Pastèque", "Abricots", "Cerises", "Prunes", "Quetsches", "Myrtilles", "Bananes", "Mangues", "Fraises", "Fruits de la passion", "Fruits secs", "Châtaignes"],
-  "Produits laitiers": ["Camembert", "Saint-Nectaire", "Beaufort", "Munster", "Chèvre", "Fromage de brebis (Ossau)", "Yaourt", "Lait ribot", "Beurre", "Beurre demi-sel", "Crème fraîche"],
-  "Matières grasses": ["Huile d'olive", "Noix", "Beurre", "Beurre demi-sel", "Miel", "Miels de montagne", "Miel de montagne", "Olives"],
-  "Boissons":       ["Eau en grande quantité", "Cidre (modération)", "Bière (modération)", "Jus de fruits", "Lait ribot"],
+  "Féculents": ["Pâtes complètes","Riz","Riz complet","Pain complet","Pain de seigle","Pommes de terre","Couscous","Boulgour","Quinoa","Lentilles vertes du Puy","Lentilles","Pois chiches","Haricots","Haricots verts","Haricots tarbais","Choucroute","Flocons d'avoine","Muesli","Igname","Patate douce","Maïs","Polenta","Tortillas / wraps","Crackers / biscuits salés","Pain pita","Gnocchis","Nouilles chinoises","Farine de sarrasin","Barres de céréales","Pain d'épices","Semoule","Châtaignes"],
+  "Protéines": ["Sardines","Maquereau","Thon en conserve","Poulet fermier","Poulet","Œufs","Jambon blanc","Jambon d'Auvergne","Confit de canard","Lentilles vertes du Puy","Poisson frais","Crevettes grises","Escalope de veau","Anchois","Tofu","Fruits secs","Noix","Amandes","Haricots tarbais","Dinde","Saucisse sèche","Saucisson","Pâté / terrine","Lardons","Lard fumé","Cabillaud","Saumon","Truite","Pois chiches","Steak de soja","Jambon serrano","Agneau","Fromage blanc (quark)","Skyr"],
+  "Légumes": ["Tomates","Tomates cerises","Courgettes","Poireaux","Carottes","Chou-fleur","Brocoli","Endives","Betteraves","Aubergines","Poivrons","Piments doux","Salade verte","Sucrine / batavia","Chou","Chou rouge","Chou kale","Christophine","Oignons","Oignons de Roscoff","Oignon rouge","Ail","Échalotes","Concombres","Radis","Épinards","Blettes","Haricots verts","Petits pois","Champignons de Paris","Champignons sauvages","Artichauts","Asperges","Courge / potiron","Navets","Céleri","Fenouil","Pousses de soja","Avocats"],
+  "Fruits": ["Pommes","Poires","Melon","Melon vert","Pastèque","Abricots","Cerises","Prunes","Quetsches","Myrtilles","Baies","Bananes","Mangues","Fruits de la passion","Fraises","Fruits secs","Châtaignes","Raisins","Framboises","Mûres","Groseilles","Pêches","Nectarines","Kiwi","Oranges","Mandarines / clémentines","Citrons","Pamplemousse","Ananas","Figues","Figues / fruits secs","Dattes","Amandes","Noisettes","Noix","Compotes (sans sucre ajouté)","Rhubarbe"],
+  "Produits laitiers": ["Camembert","Saint-Nectaire","Beaufort","Munster","Chèvre","Fromage de brebis (Ossau)","Yaourt","Lait ribot","Beurre","Beurre demi-sel","Crème fraîche","Comté","Gruyère / fromage","Emmental / fromage d'alpage","Mozzarella","Feta (fromage)","Parmesan","Gouda (fromage)","Lait","Lait demi-écrémé","Fromage blanc (quark)","Fromage à tartiner","Yaourt grec","Skyr","Fromage de chèvre frais","Ricotta","Brocciu","Halloumi (fromage)","Fromage de montagne","Cheddar / fromage","Fromage frais (faisselle)","Yaourt aux fruits"],
+  "Matières grasses": ["Huile d'olive","Huile de colza","Huile de tournesol","Noix","Beurre","Beurre demi-sel","Miel","Miels de montagne","Miel de montagne","Olives","Amandes","Noisettes","Beurre de cacahuète","Tapenade","Pesto","Aïoli / mayonnaise","Crème fraîche","Sésame / tahini","Graines de chia","Chocolat noir (>70%)","Confiture / marmelade"],
+  "Boissons": ["Eau en grande quantité","Cidre (modération)","Bière (modération)","Bières (modération)","Jus de fruits","Lait ribot","Eau pétillante","Boisson isotonique (effort)","Thé / tisane","Café","Chocolat chaud (poudre)","Sirop (dilué, modération)","Eau de coco","Smoothie / jus mixés","Lait"],
 };
 
 const NUTRI_FAMILIES = [
@@ -466,12 +467,21 @@ function renderTabs() {
 
 function renderSuggestions() {
   const z = currentRegion();
+  const filter = (document.getElementById("sugg-search").value || "").trim().toLowerCase();
   const base = CATEGORIES[state.activeCat] || [];
-  const localFirst = [...z.local].filter(p => catOf(p) === state.activeCat);
-  const rest = base.filter(p => !localFirst.includes(p));
+  const localFirst = filter ? [] : [...z.local].filter(p => catOf(p) === state.activeCat);
+  let rest;
+  if (filter) {
+    const pool = Object.values(CATEGORIES).flat();
+    rest = [...new Set(pool)].filter(p => p.toLowerCase().includes(filter));
+  } else {
+    rest = base.filter(p => !localFirst.includes(p));
+  }
   const all = [...new Set([...localFirst, ...rest])];
   document.getElementById("suggestions").innerHTML =
-    all.map(p => `<span class="sugg" data-name="${p}">${p}</span>`).join("");
+    all.length
+      ? all.map(p => `<span class="sugg" data-name="${p}">${p}</span>`).join("")
+      : `<span class="empty">Aucun produit trouvé pour « ${filter} »</span>`;
   document.querySelectorAll(".sugg").forEach(el =>
     el.addEventListener("click", () => addItem(el.dataset.name)));
 }
@@ -553,6 +563,7 @@ document.getElementById("btn-add").addEventListener("click", () => {
   addItem(name, Math.max(1, parseInt(q.value || "1", 10)));
   inp.value = ""; q.value = "";
 });
+document.getElementById("sugg-search").addEventListener("input", renderSuggestions);
 document.getElementById("new-item").addEventListener("keydown", e => {
   if (e.key === "Enter") document.getElementById("btn-add").click();
 });
