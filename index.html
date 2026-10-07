@@ -222,6 +222,32 @@
     flex-shrink: 0;
     cursor: pointer;
   }
+  #kcal-box { font-size: .85rem; }
+  .kcal-total {
+    display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .kcal-big { font-size: 1.6rem; font-weight: 800; color: var(--accent-2); }
+  .kcal-unit { color: var(--muted); font-size: .8rem; }
+  .kcal-days {
+    background: var(--accent-light);
+    border-radius: 10px; padding: 8px 12px;
+    font-size: .8rem; margin-bottom: 12px;
+  }
+  .kcal-cat-row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: .78rem; margin-bottom: 5px;
+  }
+  .kcal-cat-name { width: 110px; flex-shrink: 0; font-weight: 600; }
+  .kcal-cat-bar {
+    flex: 1; height: 8px; background: var(--border);
+    border-radius: 4px; overflow: hidden;
+  }
+  .kcal-cat-fill {
+    height: 100%; border-radius: 4px;
+    background: var(--cat-color, var(--accent));
+  }
+  .kcal-cat-val { width: 90px; text-align: right; color: var(--muted); flex-shrink: 0; }
   .bars { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 12px; }
   .bar-label { font-size: .75rem; margin-bottom: 4px; font-weight: 600; }
   .bar-track { height: 10px; background: var(--border); border-radius: 6px; overflow: hidden; }
@@ -300,6 +326,11 @@
     </div>
     <ul class="list" id="list"></ul>
     <p class="empty" id="empty-msg">Aucun article — choisissez une zone et ajoutez des suggestions.</p>
+  </div>
+
+  <div class="card">
+    <h2>🔥 Estimation calorique</h2>
+    <div id="kcal-box"></div>
   </div>
 
   <div class="card">
@@ -552,6 +583,30 @@ function catStyle(name) {
   return `--cat-color:${s.color};--cat-bg:${s.bg};`;
 }
 
+// ---------- Estimation calorique (kcal par portion ≈ 100-150g) ----------
+const KCAL = {
+  "Pâtes complètes":350,"Riz":300,"Riz complet":320,"Pain complet":550,"Pain de seigle":500,"Pommes de terre":260,"Couscous":340,"Boulgour":340,"Quinoa":360,"Lentilles":380,"Lentilles vertes du Puy":380,"Pois chiches":360,"Haricots":340,"Haricots verts":35,"Haricots tarbais":340,"Choucroute":90,"Flocons d'avoine":380,"Muesli":400,"Igname":280,"Patate douce":260,"Maïs":330,"Polenta":350,"Tortillas / wraps":290,"Crackers / biscuits salés":450,"Pain pita":275,"Gnocchis":300,"Nouilles chinoises":350,"Farine de sarrasin":340,"Barres de céréales":150,"Pain d'épices":320,"Semoule":340,"Châtaignes":350,
+  "Sardines":200,"Maquereau":230,"Thon en conserve":150,"Poulet fermier":250,"Poulet":240,"Œufs":140,"Jambon blanc":150,"Jambon d'Auvergne":200,"Confit de canard":450,"Poisson frais":180,"Crevettes grises":110,"Escalope de veau":190,"Anchois":120,"Tofu":120,"Fruits secs":400,"Noix":650,"Amandes":650,"Haricots tarbais":340,"Dinde":220,"Saucisse sèche":400,"Saucisson":450,"Pâté / terrine":350,"Lardons":400,"Lard fumé":450,"Cabillaud":150,"Saumon":280,"Truite":190,"Pois chiches":360,"Steak de soja":180,"Jambon serrano":200,"Agneau":350,"Fromage blanc (quark)":120,"Skyr":110,"Bœuf séché":400,"Viande de renne":250,"Renne / viande":250,"Filet de truite":190,"Poulpe":140,"Merlu":150,"Poisson de lac":170,"Poisson de rivière":170,"Sandre (poisson de rivière)":170,"Filet de perche (poisson)":160,"Poisson fumé":180,
+  "Tomates":25,"Tomates cerises":30,"Courgettes":35,"Poireaux":60,"Carottes":40,"Chou-fleur":30,"Brocoli":35,"Endives":20,"Betteraves":45,"Aubergines":25,"Poivrons":30,"Piments doux":30,"Salade verte":20,"Sucrine / batavia":20,"Chou":30,"Chou rouge":35,"Chou kale":40,"Christophine":30,"Oignons":45,"Oignons de Roscoff":45,"Oignon rouge":45,"Ail":100,"Échalotes":80,"Concombres":15,"Radis":20,"Épinards":25,"Blettes":20,"Petits pois":55,"Champignons de Paris":25,"Champignons sauvages":30,"Artichauts":50,"Asperges":25,"Courge / potiron":40,"Navets":35,"Céleri":20,"Fenouil":35,"Pousses de soja":45,"Avocats":240,
+  "Bananes":100,"Pommes":60,"Oranges":60,"Citrons":30,"Mandarines / clémentines":55,"Pastèque":35,"Melon":40,"Melon vert":40,"Compotes (sans sucre ajouté)":70,"Raisins":70,"Rhubarbe":25,"Poires":65,"Abricots":50,"Prunes":50,"Quetsches":50,"Pêches":55,"Nectarines":55,"Kiwi":55,"Fraises":35,"Mangues":70,"Ananas":55,"Pamplemousse":45,"Fruits secs":400,"Châtaignes":350,"Dattes":280,"Amandes":650,"Noisettes":650,"Noix":650,"Cerises":60,"Myrtilles":60,"Baies":60,"Framboises":50,"Mûres":55,"Groseilles":50,"Fruits de la passion":80,"Figues":90,"Figues / fruits secs":300,
+  "Lait":120,"Lait demi-écrémé":100,"Yaourt":80,"Yaourt aux fruits":100,"Fromage frais (faisselle)":110,"Fromage à tartiner":250,"Beurre":720,"Beurre demi-sel":720,"Crème fraîche":300,"Lait ribot":100,"Camembert":300,"Munster":330,"Chèvre":300,"Gouda (fromage)":350,"Emmental / fromage d'alpage":380,"Gruyère / fromage":380,"Comté":390,"Mozzarella":280,"Feta (fromage)":260,"Ricotta":170,"Cheddar / fromage":400,"Yaourt grec":130,"Skyr":110,"Fromage de chèvre frais":220,"Fromage de montagne":370,"Brocciu":180,"Saint-Nectaire":330,"Parmesan":430,"Halloumi (fromage)":400,"Beaufort":400,"Fromage de brebis (Ossau)":380,"Fromage de brebis":380,
+  "Huile de tournesol":880,"Huile de colza":880,"Huile d'olive":880,"Olives":150,"Miel":300,"Miels de montagne":300,"Miel de montagne":300,"Beurre de cacahuète":600,"Sésame / tahini":600,"Chocolat noir (>70%)":550,"Confiture / marmelade":250,"Aïoli / mayonnaise":600,"Tapenade":350,"Pesto":450,"Graines de chia":450,
+  "Eau en grande quantité":0,"Eau pétillante":0,"Sirop (dilué, modération)":60,"Café":5,"Thé / tisane":5,"Chocolat chaud (poudre)":150,"Jus de fruits":110,"Boisson isotonique (effort)":80,"Cidre (modération)":110,"Bière (modération)":150,"Bières (modération)":150,"Eau de coco":45,"Smoothie / jus mixés":120,
+};
+
+function estimateKcal() {
+  let total = 0;
+  const byCat = {};
+  for (const it of state.items) {
+    if (it.done) continue;
+    const k = (KCAL[it.name] !== undefined ? KCAL[it.name] : 150) * it.qty;
+    total += k;
+    const c = catOf(it.name) || "Autres";
+    byCat[c] = (byCat[c] || 0) + k;
+  }
+  return { total, byCat };
+}
+
 const NUTRI_FAMILIES = [
   { key: "Féculents",        label: "Féculents / énergie" },
   { key: "Protéines",        label: "Protéines" },
@@ -663,6 +718,7 @@ function renderList() {
   const ul = document.getElementById("list");
   const n = state.items.length;
   document.getElementById("item-count").textContent = n ? `(${n} article${n > 1 ? "s" : ""})` : "";
+  renderKcal();
   const warn = document.getElementById("cook-warn");
   if (!state.canCook) {
     const toCook = state.items.filter(it => !it.done && NEEDS_COOKING.has(it.name));
@@ -722,6 +778,40 @@ function renderList() {
       state.items.splice(i, 1); save(); renderList(); renderSuggestions(); renderBars();
     });
   });
+}
+
+function renderKcal() {
+  const { total, byCat } = estimateKcal();
+  const box = document.getElementById("kcal-box");
+  if (!state.items.length || total === 0) {
+    box.innerHTML = `<p class="empty">Ajoutez des articles pour voir l'estimation calorique de votre liste.</p>`;
+    return;
+  }
+  const days = total / 3500;
+  const catOrder = Object.keys(CATEGORIES).concat("Autres");
+  const rows = catOrder
+    .filter(c => byCat[c])
+    .map(c => {
+      const pct = Math.round(byCat[c] / total * 100);
+      const st = CAT_COLORS[c] || { color: "#8a8578", bg: "#f0eee8" };
+      return `<div class="kcal-cat-row" style="--cat-color:${st.color}">
+        <span class="kcal-cat-name">${c}</span>
+        <span class="kcal-cat-bar"><span class="kcal-cat-fill" style="width:${pct}%"></span></span>
+        <span class="kcal-cat-val">${Math.round(byCat[c]).toLocaleString("fr-FR")} kcal · ${pct}%</span>
+      </div>`;
+    })
+    .join("");
+  const daysTxt = days >= 1
+    ? `≈ <strong>${days >= 10 ? Math.round(days) : days.toFixed(1)} jour${days >= 2 ? "s" : ""}</strong> de ravitaillement`
+    : `≈ <strong>${Math.round(days * 24)} h</strong> de ravitaillement`;
+  box.innerHTML = `
+    <div class="kcal-total">
+      <span class="kcal-big">${total.toLocaleString("fr-FR")}</span>
+      <span class="kcal-unit">kcal au total (hors articles cochés)</span>
+    </div>
+    <div class="kcal-days">🚴 ${daysTxt} pour un cycliste en voyage (~3 500 kcal/jour)</div>
+    ${rows}
+  `;
 }
 
 function renderBars() {
