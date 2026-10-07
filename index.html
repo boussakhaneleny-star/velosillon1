@@ -387,6 +387,17 @@ const CATEGORIES = {
   "Boissons": ["Eau en grande quantité","Cidre (modération)","Bière (modération)","Bières (modération)","Jus de fruits","Lait ribot","Eau pétillante","Boisson isotonique (effort)","Thé / tisane","Café","Chocolat chaud (poudre)","Sirop (dilué, modération)","Eau de coco","Smoothie / jus mixés","Lait"],
 };
 
+// ---------- Indice de prix (1 = bon marché, 2 = moyen, 3 = cher) ----------
+const PRICE = {
+  "Œufs":1,"Sardines":1,"Maquereau":1,"Thon en conserve":1,"Jambon blanc":1,"Lardons":1,"Pois chiches":1,"Lentilles":1,"Lentilles vertes du Puy":2,
+  "Pâtes complètes":1,"Riz":1,"Riz complet":1,"Pain complet":1,"Pain de seigle":1,"Pommes de terre":1,"Couscous":1,"Boulgour":1,"Semoule":1,"Maïs":1,"Polenta":1,"Farine de sarrasin":1,"Pain pita":1,"Flocons d'avoine":1,"Igname":1,"Patate douce":1,"Haricots":1,"Tortillas / wraps":2,"Crackers / biscuits salés":2,"Gnocchis":2,"Nouilles chinoises":2,"Barres de céréales":2,"Pain d'épices":2,"Muesli":2,"Quinoa":2,"Choucroute":2,"Haricots verts":2,"Haricots tarbais":3,
+  "Tomates":1,"Courgettes":1,"Poireaux":1,"Carottes":1,"Chou-fleur":1,"Brocoli":1,"Endives":1,"Betteraves":1,"Aubergines":1,"Poivrons":1,"Piments doux":1,"Salade verte":1,"Chou":1,"Chou rouge":1,"Chou kale":1,"Oignons":1,"Oignon rouge":1,"Ail":1,"Concombres":1,"Radis":1,"Épinards":1,"Blettes":1,"Champignons de Paris":1,"Courge / potiron":1,"Navets":1,"Céleri":1,"Fenouil":1,"Pousses de soja":1,"Tomates cerises":2,"Sucrine / batavia":2,"Oignons de Roscoff":2,"Échalotes":2,"Christophine":2,"Avocats":2,"Petits pois":2,"Champignons sauvages":3,"Artichauts":3,"Asperges":3,
+  "Bananes":1,"Pommes":1,"Oranges":1,"Citrons":1,"Mandarines / clémentines":1,"Pastèque":1,"Melon":1,"Melon vert":2,"Compotes (sans sucre ajouté)":1,"Raisins":1,"Rhubarbe":1,"Poires":2,"Abricots":2,"Prunes":2,"Quetsches":2,"Pêches":2,"Nectarines":2,"Kiwi":2,"Fraises":2,"Mangues":2,"Ananas":2,"Pamplemousse":2,"Fruits secs":2,"Châtaignes":2,"Dattes":2,"Amandes":2,"Noisettes":2,"Noix":2,"Cerises":3,"Myrtilles":3,"Baies":3,"Framboises":3,"Mûres":3,"Groseilles":3,"Fruits de la passion":3,"Figues":3,"Figues / fruits secs":2,
+  "Lait":1,"Lait demi-écrémé":1,"Yaourt":1,"Yaourt aux fruits":1,"Fromage blanc (quark)":2,"Fromage frais (faisselle)":1,"Fromage à tartiner":1,"Beurre":1,"Beurre demi-sel":1,"Crème fraîche":1,"Lait ribot":1,"Camembert":2,"Munster":2,"Chèvre":2,"Gouda (fromage)":2,"Emmental / fromage d'alpage":2,"Gruyère / fromage":2,"Comté":2,"Mozzarella":2,"Feta (fromage)":2,"Ricotta":2,"Cheddar / fromage":2,"Yaourt grec":2,"Skyr":2,"Fromage de chèvre frais":2,"Fromage de montagne":2,"Brocciu":2,"Saint-Nectaire":2,"Parmesan":3,"Halloumi (fromage)":3,"Beaufort":3,"Fromage de brebis (Ossau)":3,
+  "Huile de tournesol":1,"Huile de colza":1,"Beurre":1,"Beurre demi-sel":1,"Crème fraîche":1,"Huile d'olive":2,"Olives":2,"Miel":2,"Miels de montagne":3,"Miel de montagne":3,"Noix":2,"Amandes":2,"Noisettes":2,"Beurre de cacahuète":2,"Sésame / tahini":2,"Chocolat noir (>70%)":2,"Confiture / marmelade":2,"Aïoli / mayonnaise":2,"Tapenade":3,"Pesto":3,"Graines de chia":3,
+  "Eau en grande quantité":1,"Eau pétillante":1,"Sirop (dilué, modération)":1,"Lait":1,"Lait ribot":1,"Café":2,"Thé / tisane":2,"Chocolat chaud (poudre)":2,"Jus de fruits":2,"Boisson isotonique (effort)":2,"Cidre (modération)":2,"Bière (modération)":2,"Bières (modération)":2,"Eau de coco":3,"Smoothie / jus mixés":3,
+};
+
 const NUTRI_FAMILIES = [
   { key: "Féculents",        label: "Féculents / énergie" },
   { key: "Protéines",        label: "Protéines" },
@@ -478,9 +489,15 @@ function renderSuggestions() {
     rest = base.filter(p => !localFirst.includes(p));
   }
   const all = [...new Set([...localFirst, ...rest])];
+  all.sort((a, b) => (PRICE[a] || 2) - (PRICE[b] || 2));
   document.getElementById("suggestions").innerHTML =
     all.length
-      ? all.map(p => `<span class="sugg" data-name="${p}">${p}</span>`).join("")
+      ? all.map(p => {
+          const pr = PRICE[p] || 2;
+          const euro = "€".repeat(pr) + "\u00A0".repeat(3 - pr);
+          const isLocal = z.local.includes(p);
+          return `<span class="sugg ${isLocal ? "local" : ""}" data-name="${p}" title="${isLocal ? "Spécialité locale — " : ""}Indice de prix : ${"€".repeat(pr)}">${p}<span class="price">${euro}</span></span>`;
+        }).join("")
       : `<span class="empty">Aucun produit trouvé pour « ${filter} »</span>`;
   document.querySelectorAll(".sugg").forEach(el =>
     el.addEventListener("click", () => addItem(el.dataset.name)));
