@@ -144,16 +144,24 @@
     user-select: none;
   }
   .cat-tab:hover { border-color: var(--accent); }
-  .cat-tab.active {
-    background: linear-gradient(135deg, #2f7d4f, #4c9d63);
-    color: #fff;
-    border-color: transparent;
-    box-shadow: 0 3px 8px rgba(47, 125, 79, .3);
-  }
+  .cat-tab.active.c1 { background: linear-gradient(135deg, #b7791f, #d69e2e); border-color: transparent; box-shadow: 0 3px 8px rgba(183,121,31,.35); color: #fff; }
+  .cat-tab.active.c2 { background: linear-gradient(135deg, #c05621, #e07a3f); border-color: transparent; box-shadow: 0 3px 8px rgba(192,86,33,.35); color: #fff; }
+  .cat-tab.active.c3 { background: linear-gradient(135deg, #2f7d4f, #4c9d63); border-color: transparent; box-shadow: 0 3px 8px rgba(47,125,79,.35); color: #fff; }
+  .cat-tab.active.c4 { background: linear-gradient(135deg, #b83280, #d53f8c); border-color: transparent; box-shadow: 0 3px 8px rgba(184,50,128,.35); color: #fff; }
+  .cat-tab.active.c5 { background: linear-gradient(135deg, #2b6cb0, #429bd4); border-color: transparent; box-shadow: 0 3px 8px rgba(43,108,176,.35); color: #fff; }
+  .cat-tab.active.c6 { background: linear-gradient(135deg, #6b46c1, #8b66d4); border-color: transparent; box-shadow: 0 3px 8px rgba(107,70,193,.35); color: #fff; }
+  .cat-tab.active.c7 { background: linear-gradient(135deg, #2c7a7b, #3f9d9e); border-color: transparent; box-shadow: 0 3px 8px rgba(44,122,123,.35); color: #fff; }
+  .cat-tab:not(.active).c1 { color: #b7791f; border-color: rgba(183,121,31,.35); }
+  .cat-tab:not(.active).c2 { color: #c05621; border-color: rgba(192,86,33,.35); }
+  .cat-tab:not(.active).c3 { color: #2f7d4f; border-color: rgba(47,125,79,.35); }
+  .cat-tab:not(.active).c4 { color: #b83280; border-color: rgba(184,50,128,.35); }
+  .cat-tab:not(.active).c5 { color: #2b6cb0; border-color: rgba(43,108,176,.35); }
+  .cat-tab:not(.active).c6 { color: #6b46c1; border-color: rgba(107,70,193,.35); }
+  .cat-tab:not(.active).c7 { color: #2c7a7b; border-color: rgba(44,122,123,.35); }
   .suggestions { display: flex; flex-wrap: wrap; gap: 8px; }
   .sugg {
     background: #fff;
-    border: 1.5px dashed rgba(47, 125, 79, .5);
+    border: 1.5px dashed var(--cat-color, rgba(47, 125, 79, .5));
     color: var(--text);
     border-radius: 20px;
     padding: 6px 12px;
@@ -162,7 +170,7 @@
     transition: all .13s ease;
   }
   .sugg:hover {
-    background: var(--accent-light);
+    background: var(--cat-bg, var(--accent-light));
     transform: translateY(-2px);
     box-shadow: 0 4px 10px rgba(47, 125, 79, .15);
   }
@@ -189,8 +197,8 @@
     font-size: .68rem;
     padding: 3px 10px;
     border-radius: 10px;
-    background: var(--accent-light);
-    color: var(--accent);
+    background: var(--cat-bg, var(--accent-light));
+    color: var(--cat-color, var(--accent));
     white-space: nowrap;
     font-weight: 600;
   }
@@ -515,6 +523,21 @@ const NEEDS_COOKING = new Set([
   "Figatellu (charcuterie)","Gbejniet (fromage affiné)","Lavande (miel)",
 ]);
 
+// ---------- Couleurs par catégorie ----------
+const CAT_COLORS = {
+  "Féculents":        { c: 1, color: "#b7791f", bg: "#fdf6e3" },
+  "Protéines":        { c: 2, color: "#c05621", bg: "#fdeee3" },
+  "Légumes":         { c: 3, color: "#2f7d4f", bg: "#eaf5ec" },
+  "Fruits":           { c: 4, color: "#b83280", bg: "#fdebf4" },
+  "Produits laitiers": { c: 5, color: "#2b6cb0", bg: "#e8f1fa" },
+  "Matières grasses": { c: 6, color: "#6b46c1", bg: "#f0eafb" },
+  "Boissons":       { c: 7, color: "#2c7a7b", bg: "#e6f4f4" },
+};
+function catStyle(name) {
+  const s = CAT_COLORS[catOf(name)] || { color: "#2f7d4f", bg: "#eaf5ec" };
+  return `--cat-color:${s.color};--cat-bg:${s.bg};`;
+}
+
 const NUTRI_FAMILIES = [
   { key: "Féculents",        label: "Féculents / énergie" },
   { key: "Protéines",        label: "Protéines" },
@@ -588,7 +611,7 @@ function renderZones() {
 function renderTabs() {
   const tabs = document.getElementById("cat-tabs");
   tabs.innerHTML = Object.keys(CATEGORIES).map(c =>
-    `<span class="cat-tab ${c === state.activeCat ? "active" : ""}" data-cat="${c}">${c}</span>`
+    `<span class="cat-tab ${c === state.activeCat ? "active" : ""} c${(CAT_COLORS[c] || {}).c || 3}" data-cat="${c}">${c}</span>`
   ).join("");
   tabs.querySelectorAll(".cat-tab").forEach(el =>
     el.addEventListener("click", () => { state.activeCat = el.dataset.cat; save(); renderTabs(); renderSuggestions(); }));
@@ -615,7 +638,7 @@ function renderSuggestions() {
           const pr = PRICE[p] || 2;
           const euro = "€".repeat(pr) + "\u00A0".repeat(3 - pr);
           const isLocal = z.local.includes(p);
-          return `<span class="sugg ${isLocal ? "local" : ""}" data-name="${p}" title="${isLocal ? "Spécialité locale — " : ""}Indice de prix : ${"€".repeat(pr)}">${p}<span class="price">${euro}</span></span>`;
+          return `<span class="sugg ${isLocal ? "local" : ""}" data-name="${p}" style="${catStyle(p)}" title="${isLocal ? "Spécialité locale — " : ""}Indice de prix : ${"€".repeat(pr)}">${p}<span class="price">${euro}</span></span>`;
         }).join("")
       : `<span class="empty">Aucun produit trouvé pour « ${filter} »${!state.canCook ? " — essayez d'activer la cuisson ou changez de catégorie" : ""}</span>`;
   document.querySelectorAll(".sugg").forEach(el =>
@@ -643,7 +666,7 @@ function renderList() {
   document.getElementById("empty-msg").style.display = n ? "none" : "block";
   ul.innerHTML = state.items.map((it, i) => {
     const c = catOf(it.name);
-    return `<li class="${it.done ? "done" : ""}" data-i="${i}">
+    return `<li class="${it.done ? "done" : ""}" data-i="${i}" style="${catStyle(it.name)}">
       <input type="checkbox" class="check" ${it.done ? "checked" : ""}>
       <span class="name">${it.name}</span>
       ${c ? `<span class="tag">${c}</span>` : ""}
