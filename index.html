@@ -223,6 +223,26 @@
     cursor: pointer;
   }
   #kcal-box { font-size: .85rem; }
+  .bio-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .bio-grid label {
+    display: flex; flex-direction: column; gap: 4px;
+    font-size: .78rem; font-weight: 600; color: var(--muted);
+  }
+  #bio-result { margin-top: 12px; }
+  .bio-needs {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 8px;
+  }
+  .bio-need {
+    border-radius: 12px; padding: 10px 12px;
+    background: var(--accent-light);
+    border: 1px solid rgba(47, 125, 79, .15);
+  }
+  .bio-need .v { font-size: 1.05rem; font-weight: 800; color: var(--accent); }
+  .bio-need .l { font-size: .7rem; color: var(--muted); }
   .kcal-total {
     display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
     margin-bottom: 10px;
@@ -326,6 +346,28 @@
     </div>
     <ul class="list" id="list"></ul>
     <p class="empty" id="empty-msg">Aucun article — choisissez une zone et ajoutez des suggestions.</p>
+  </div>
+
+  <div class="card">
+    <h2>👤 Ma biometrie</h2>
+    <div class="bio-grid">
+      <label>Sexe
+        <select id="bio-sex">
+          <option value="h">Homme</option>
+          <option value="f">Femme</option>
+        </select>
+      </label>
+      <label>Âge
+        <input type="number" id="bio-age" placeholder="ex. 30" min="10" max="90">
+      </label>
+      <label>Poids (kg)
+        <input type="number" id="bio-weight" placeholder="ex. 70" min="30" max="200">
+      </label>
+      <label>Taille (cm)
+        <input type="number" id="bio-height" placeholder="ex. 175" min="120" max="220">
+      </label>
+    </div>
+    <div id="bio-result"></div>
   </div>
 
   <div class="card">
@@ -594,6 +636,41 @@ const KCAL = {
   "Eau en grande quantité":0,"Eau pétillante":0,"Sirop (dilué, modération)":60,"Café":5,"Thé / tisane":5,"Chocolat chaud (poudre)":150,"Jus de fruits":110,"Boisson isotonique (effort)":80,"Cidre (modération)":110,"Bière (modération)":150,"Bières (modération)":150,"Eau de coco":45,"Smoothie / jus mixés":120,
 };
 
+// ---------- Biometrie & besoins nutritionnels ----------
+function bioNeeds() {
+  const sex = state.bio.sex, age = state.bio.age, w = state.bio.weight, h = state.bio.height;
+  if (!age || !w || !h) return null;
+  const bmr = sex === "f"
+    ? 10 * w + 6.25 * h - 5 * age - 161
+    : 10 * w + 6.25 * h - 5 * age + 5;
+  const riding = 2500;
+  const kcal = Math.round((bmr * 1.4 + riding) / 50) * 50;
+  return {
+    kcal,
+    protein: Math.round(w * 1.5),
+    carbs: Math.round(kcal * 0.55 / 4),
+    fat: Math.round(kcal * 0.25 / 9),
+    water: Math.round(w * 0.04 * 10) / 10,
+  };
+}
+
+function renderBio() {
+  const r = bioNeeds();
+  const box = document.getElementById("bio-result");
+  if (!r) {
+    box.innerHTML = `<p class="empty" style="padding:6px">Remplissez sexe, âge, poids et taille pour calculer vos besoins quotidiens.</p>`;
+  } else {
+    box.innerHTML = `<div class="bio-needs">
+      <div class="bio-need"><div class="v">${r.kcal.toLocaleString("fr-FR")}</div><div class="l">kcal / jour (vélo)</div></div>
+      <div class="bio-need"><div class="v">${r.protein} g</div><div class="l">protéines / jour</div></div>
+      <div class="bio-need"><div class="v">${r.carbs} g</div><div class="l">glucides / jour</div></div>
+      <div class="bio-need"><div class="v">${r.fat} g</div><div class="l">lipides / jour</div></div>
+      <div class="bio-need"><div class="v">${r.water} L</div><div class="l">eau / jour (minimum)</div></div>
+    </div>`;
+  }
+  renderKcal();
+}
+
 function estimateKcal() {
   let total = 0;
   const byCat = {};
@@ -618,7 +695,7 @@ const NUTRI_FAMILIES = [
 
 // ---------- État ----------
 const LS_KEY = "velosillon.v1";
-let state = { country: "France", region: "Bretagne", activeCat: "Féculents", canCook: true, items: [] };
+let state = { country: "France", region: "Bretagne", activeCat: "Féculents", canCook: true, bio: { sex: "h", age: null, weight: null, height: null }, items: [] };
 
 function load() {
   try {
@@ -627,6 +704,7 @@ function load() {
       const s = JSON.parse(raw);
       state = Object.assign(state, s);
       if (typeof state.canCook !== "boolean") state.canCook = true;
+      if (!state.bio) state.bio = { sex: "h", age: null, weight: null, height: null };
       // migration depuis l'ancienne version (zone unique)
       if (s.zone) {
         const m = { bretagne: ["France", "Bretagne"], normandie: ["France", "Normandie"],
@@ -787,7 +865,9 @@ function renderKcal() {
     box.innerHTML = `<p class="empty">Ajoutez des articles pour voir l'estimation calorique de votre liste.</p>`;
     return;
   }
-  const days = total / 3500;
+  const needs = bioNeeds();
+  const daily = needs ? needs.kcal : 3500;
+  const days = total / daily;
   const catOrder = Object.keys(CATEGORIES).concat("Autres");
   const rows = catOrder
     .filter(c => byCat[c])
@@ -804,12 +884,13 @@ function renderKcal() {
   const daysTxt = days >= 1
     ? `≈ <strong>${days >= 10 ? Math.round(days) : days.toFixed(1)} jour${days >= 2 ? "s" : ""}</strong> de ravitaillement`
     : `≈ <strong>${Math.round(days * 24)} h</strong> de ravitaillement`;
+  const basis = needs ? `sur la base de <strong>${daily.toLocaleString("fr-FR")} kcal/jour</strong> (vos données biométriques)` : `sur la base de 3 500 kcal/jour (moyenne cycliste — remplissez la biometrie pour affiner)`;
   box.innerHTML = `
     <div class="kcal-total">
       <span class="kcal-big">${total.toLocaleString("fr-FR")}</span>
       <span class="kcal-unit">kcal au total (hors articles cochés)</span>
     </div>
-    <div class="kcal-days">🚴 ${daysTxt} pour un cycliste en voyage (~3 500 kcal/jour)</div>
+    <div class="kcal-days">🚴 ${daysTxt} ${basis}</div>
     ${rows}
   `;
 }
@@ -878,6 +959,20 @@ document.getElementById("cook-no").addEventListener("click", () => {
   state.canCook = false; save(); renderCookToggle(); renderSuggestions(); renderList();
   toast("🔥 Mode sans cuisson : produits crus uniquement");
 });
+[["bio-sex", "sex"], ["bio-age", "age"], ["bio-weight", "weight"], ["bio-height", "height"]].forEach(([id, key]) => {
+  const el = document.getElementById(id);
+  if (state.bio[key] !== null && state.bio[key] !== undefined) el.value = state.bio[key];
+  el.addEventListener("input", () => {
+    const v = el.value;
+    state.bio[key] = key === "sex" ? v : (v === "" ? null : Math.round(+v));
+    save(); renderBio();
+  });
+  el.addEventListener("change", () => {
+    const v = el.value;
+    state.bio[key] = key === "sex" ? v : (v === "" ? null : Math.round(+v));
+    save(); renderBio();
+  });
+});
 document.getElementById("sugg-search").addEventListener("input", renderSuggestions);
 document.getElementById("new-item").addEventListener("keydown", e => {
   if (e.key === "Enter") document.getElementById("btn-add").click();
@@ -900,7 +995,7 @@ document.getElementById("btn-reset").addEventListener("click", () => {
 });
 
 load();
-renderZones(); renderTabs(); renderCookToggle(); renderSuggestions(); renderList(); renderBars();
+renderZones(); renderTabs(); renderCookToggle(); renderSuggestions(); renderBio(); renderList(); renderBars();
 </script>
 </body>
 </html>
