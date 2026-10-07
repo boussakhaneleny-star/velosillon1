@@ -280,6 +280,19 @@
   }
   .cover-label { width: 80px; flex-shrink: 0; font-weight: 600; }
   .cover-val { width: 78px; text-align: right; flex-shrink: 0; font-size: .75rem; }
+  .cover-scale {
+    position: relative;
+    background:
+      linear-gradient(to right, transparent 0, transparent calc(100% - 2px), var(--border) calc(100% - 2px), var(--border) 100%),
+      var(--border);
+  }
+  .bar-wrap { position: relative; }
+  .bar-pct {
+    font-size: .7rem; font-weight: 700;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 2px;
+  }
   .bars { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 12px; }
   .bar-label { font-size: .75rem; margin-bottom: 4px; font-weight: 600; }
   .bar-track { height: 10px; background: var(--border); border-radius: 6px; overflow: hidden; }
@@ -936,7 +949,6 @@ function renderKcal() {
 function coverageBlock(totalKcal) {
   const needs = bioNeeds();
   const m = estimateMacros();
-  const pct = v => Math.round(v);
   const rows = [
     { label: "Calories", val: totalKcal, need: needs.kcal, unit: "kcal" },
     { label: "Protéines", val: m.p, need: needs.protein, unit: "g" },
@@ -944,13 +956,15 @@ function coverageBlock(totalKcal) {
     { label: "Lipides", val: m.f, need: needs.fat, unit: "g" },
   ];
   const html = rows.map(r => {
-    const p = Math.min(100, Math.round(r.val / r.need * 100));
-    const color = p >= 100 ? "#2f7d4f" : p >= 50 ? "#d69e2e" : "#c05621";
-    const icon = p >= 100 ? "✅" : p >= 50 ? "🟡" : "🟠";
+    const realPct = r.val / r.need * 100;
+    const barPct = Math.min(100, realPct);
+    const p = Math.round(realPct);
+    const color = realPct >= 100 ? "#2f7d4f" : realPct >= 50 ? "#d69e2e" : "#c05621";
+    const icon = realPct >= 100 ? "✅" : realPct >= 50 ? "🟡" : "🟠";
     return `<div class="cover-row">
       <span class="cover-label">${r.label}</span>
-      <span class="kcal-cat-bar"><span class="kcal-cat-fill" style="width:${p}%;background:${color}"></span></span>
-      <span class="cover-val" style="color:${color};font-weight:700">${icon} ${pct(p)} %</span>
+      <span class="kcal-cat-bar cover-scale"><span class="kcal-cat-fill" style="width:${barPct.toFixed(0)}%;background:${color}"></span></span>
+      <span class="cover-val" style="color:${color};font-weight:700">${icon} ${p} %</span>
     </div>`;
   }).join("");
   return `<h3 class="cover-title">🎯 Couverture des besoins quotidiens</h3>${html}
@@ -968,7 +982,7 @@ function renderBars() {
     const pct = Math.min(100, Math.round((counts[f.key] || 0) / 4 * 100));
     const ok = (counts[f.key] || 0) > 0 ? "✓" : "";
     return `<div>
-      <div class="bar-label">${f.label} ${ok}</div>
+      <div class="bar-label">${f.label} ${ok} <span style="color:var(--accent);font-weight:700">${pct}%</span></div>
       <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
     </div>`;
   }).join("");
