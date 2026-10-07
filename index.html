@@ -772,8 +772,11 @@ function load() {
   if (!c.regions.find(r => r.name === state.region)) state.region = c.regions[0].name;
 }
 function save() {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {}
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); return true; } catch (e) { return false; }
 }
+// sauvegarde de secours à la fermeture / masquage de l'app
+window.addEventListener("pagehide", save);
+document.addEventListener("visibilitychange", () => { if (document.hidden) save(); });
 function currentRegion() {
   const c = COUNTRIES.find(x => x.name === state.country);
   return c.regions.find(r => r.name === state.region) || c.regions[0];
@@ -1037,7 +1040,7 @@ document.getElementById("cook-no").addEventListener("click", () => {
 });
 [["bio-sex", "sex"], ["bio-age", "age"], ["bio-weight", "weight"], ["bio-height", "height"]].forEach(([id, key]) => {
   const el = document.getElementById(id);
-  if (state.bio[key] !== null && state.bio[key] !== undefined) el.value = state.bio[key];
+  if (state.bio[key] !== null && state.bio[key] !== undefined && state.bio[key] !== "") el.value = state.bio[key];
   el.addEventListener("input", () => {
     const v = el.value;
     state.bio[key] = key === "sex" ? v : (v === "" ? null : Math.round(+v));
@@ -1046,8 +1049,10 @@ document.getElementById("cook-no").addEventListener("click", () => {
   el.addEventListener("change", () => {
     const v = el.value;
     state.bio[key] = key === "sex" ? v : (v === "" ? null : Math.round(+v));
-    save(); renderBio();
+    if (save()) toast("💾 Biometrie enregistrée");
+    renderBio();
   });
+  el.addEventListener("blur", save);
 });
 document.getElementById("sugg-search").addEventListener("input", renderSuggestions);
 document.getElementById("new-item").addEventListener("keydown", e => {
