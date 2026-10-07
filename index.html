@@ -202,6 +202,20 @@
     white-space: nowrap;
     font-weight: 600;
   }
+  ul.list li.group-header {
+    border-bottom: none;
+    padding: 14px 6px 4px;
+    animation: none;
+    cursor: default;
+  }
+  .group-title {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: .8rem; font-weight: 700;
+    padding: 4px 14px;
+    border-radius: 20px;
+    color: var(--cat-color, var(--accent));
+    background: var(--cat-bg, var(--accent-light));
+  }
   .check {
     width: 22px; height: 22px;
     accent-color: var(--accent);
@@ -664,16 +678,41 @@ function renderList() {
     warn.innerHTML = "";
   }
   document.getElementById("empty-msg").style.display = n ? "none" : "block";
-  ul.innerHTML = state.items.map((it, i) => {
+  const catOrder = Object.keys(CATEGORIES);
+  const groups = {};
+  const noCat = [];
+  state.items.forEach((it, i) => {
     const c = catOf(it.name);
-    return `<li class="${it.done ? "done" : ""}" data-i="${i}" style="${catStyle(it.name)}">
+    if (c) { (groups[c] = groups[c] || []).push({ it, i }); }
+    else noCat.push({ it, i });
+  });
+  Object.values(groups).forEach(g => g.sort((a, b) => (PRICE[a.it.name] || 2) - (PRICE[b.it.name] || 2)));
+  noCat.sort((a, b) => (PRICE[a.it.name] || 2) - (PRICE[b.it.name] || 2));
+  let html = "";
+  for (const c of catOrder) {
+    if (!groups[c]) continue;
+    html += `<li class="group-header" style="${catStyle(c === "_" ? "" : groups[c][0].it.name)}">
+      <span class="group-title">${c} · ${groups[c].length}</span>
+    </li>`;
+    html += groups[c].map(({ it, i }) =>
+      `<li class="${it.done ? "done" : ""}" data-i="${i}" style="${catStyle(it.name)}">
       <input type="checkbox" class="check" ${it.done ? "checked" : ""}>
       <span class="name">${it.name}</span>
-      ${c ? `<span class="tag">${c}</span>` : ""}
       <span class="qty">×${it.qty}</span>
       <button class="small del" data-del="${i}">🗑</button>
-    </li>`;
-  }).join("");
+    </li>`).join("");
+  }
+  if (noCat.length) {
+    html += `<li class="group-header"><span class="group-title">Autres · ${noCat.length}</span></li>`;
+    html += noCat.map(({ it, i }) =>
+      `<li class="${it.done ? "done" : ""}" data-i="${i}">
+      <input type="checkbox" class="check" ${it.done ? "checked" : ""}>
+      <span class="name">${it.name}</span>
+      <span class="qty">×${it.qty}</span>
+      <button class="small del" data-del="${i}">🗑</button>
+    </li>`).join("");
+  }
+  ul.innerHTML = html;
   ul.querySelectorAll("li").forEach(li => {
     const i = +li.dataset.i;
     li.querySelector(".check").addEventListener("change", e => {
