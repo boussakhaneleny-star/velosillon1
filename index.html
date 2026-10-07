@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VeloSillon — Liste de courses à vélo</title>
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --card: #ffffff;
+    --accent: #2e7d32;
+    --accent-light: #e8f5e9;
+    --text: #2b2b2b;
+    --muted: #7a7a7a;
+    --border: #e0ddd4;
+    --danger: #c62828;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    padding-bottom: 80px;
+  }
+  header {
+    background: var(--accent);
+    color: #fff;
+    padding: 16px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 6px rgba(0,0,0,.15);
+  }
+  header h1 { font-size: 1.2rem; }
+  header p { font-size: .8rem; opacity: .9; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 16px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  h2 { font-size: 1rem; margin-bottom: 10px; color: var(--accent); }
+  select, input[type="text"], input[type="number"] {
+    font: inherit;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    width: 100%;
+  }
+  .row { display: flex; gap: 8px; margin-top: 10px; }
+  .row > * { flex: 1; }
+  button {
+    font: inherit;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    background: var(--accent);
+    color: #fff;
+  }
+  button.ghost { background: var(--accent-light); color: var(--accent); }
+  button.small { padding: 4px 8px; font-size: .8rem; }
+  .zone-info {
+    background: var(--accent-light);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: .85rem;
+    margin-top: 10px;
+  }
+  .cat-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .cat-tab {
+    padding: 5px 12px;
+    border-radius: 20px;
+    background: var(--accent-light);
+    color: var(--accent);
+    cursor: pointer;
+    font-size: .82rem;
+    border: 1px solid transparent;
+  }
+  .cat-tab.active { background: var(--accent); color: #fff; }
+  .suggestions { display: flex; flex-wrap: wrap; gap: 6px; }
+  .sugg {
+    background: #fff;
+    border: 1px dashed var(--accent);
+    color: var(--accent);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: .82rem;
+    cursor: pointer;
+  }
+  .sugg:hover { background: var(--accent-light); }
+  ul.list { list-style: none; }
+  ul.list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  ul.list li.done .name { text-decoration: line-through; color: var(--muted); }
+  ul.list .name { flex: 1; }
+  ul.list .qty { color: var(--muted); font-size: .85rem; white-space: nowrap; }
+  .tag {
+    font-size: .68rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--accent-light);
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  .check {
+    width: 20px; height: 20px;
+    accent-color: var(--accent);
+    flex-shrink: 0;
+  }
+  .bars { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; }
+  .bar-label { font-size: .75rem; margin-bottom: 3px; }
+  .bar-track { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--accent); transition: width .3s; }
+  .empty { color: var(--muted); font-size: .85rem; text-align: center; padding: 12px; }
+  .toast {
+    position: fixed; bottom: 20px; left: 50%;
+    transform: translateX(-50%);
+    background: #333; color: #fff;
+    padding: 10px 18px; border-radius: 8px;
+    font-size: .85rem; opacity: 0;
+    transition: opacity .3s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+  footer {
+    text-align: center; font-size: .72rem; color: var(--muted);
+    padding: 16px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>🚴 VeloSillon — Courses du voyage</h1>
+  <p>Liste de courses par zone géographique, pour une alimentation variée et riche.</p>
+</header>
+
+<div class="wrap">
+
+  <div class="card">
+    <h2>📍 Ma zone géographique</h2>
+    <label for="zone" style="font-size:.85rem;color:var(--muted)">Zone actuelle du voyage</label>
+    <select id="zone"></select>
+    <div class="row">
+      <button class="ghost" id="btn-geo">🛰️ Détecter ma position</button>
+      <button class="ghost" id="btn-reset">🗑️ Vider la liste</button>
+    </div>
+    <div class="zone-info" id="zone-info"></div>
+  </div>
+
+  <div class="card">
+    <h2>💡 Produits locaux suggérés</h2>
+    <div class="cat-tabs" id="cat-tabs"></div>
+    <div class="suggestions" id="suggestions"></div>
+    <p style="font-size:.75rem;color:var(--muted);margin-top:10px">
+      Cliquez sur un produit pour l'ajouter à votre liste. Les suggestions dépendent de la zone choisie.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>🛒 Ma liste de courses</h2>
+    <div class="row" style="margin-top:0">
+      <input type="text" id="new-item" placeholder="Ajouter un produit…" style="flex:2">
+      <input type="number" id="new-qty" placeholder="Qté" min="1" style="flex:1">
+      <button id="btn-add">➕</button>
+    </div>
+    <ul class="list" id="list"></ul>
+    <p class="empty" id="empty-msg">Aucun article — choisissez une zone et ajoutez des suggestions.</p>
+  </div>
+
+  <div class="card">
+    <h2>🥗 Équilibre nutritionnel</h2>
+    <p style="font-size:.8rem;color:var(--muted);margin-bottom:10px">
+      Couverture des grandes familles alimentaires dans votre liste (objectif : au moins 1 produit par famille).
+    </p>
+    <div class="bars" id="bars"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+<footer>VeloSillon — vos données restent sur votre appareil (stockage local). Fonctionne hors-ligne.</footer>
+
+<script>
+"use strict";
+
+// ---------- Données : zones et spécialités ----------
+const ZONES = [
+  { id: "bretagne", name: "Bretagne", lat: 48.2, lon: -3.0,
+    tip: "Poissons, produits laitiers et légumes de plein champ. Pensez aux sardines et au lait ribot.",
+    local: ["Sardines", "Maquereau", "Farine de sarrasin", "Lait ribot", "Beurre demi-sel", "Oignons de Roscoff", "Pommes", "Chou-fleur", "Crevettes grises", "Pain complet"] },
+  { id: "normandie", name: "Normandie", lat: 49.1, lon: -0.4,
+    tip: "Terre de pommiers et d'élevage : calcium et fruits faciles à trouver.",
+    local: ["Pommes", "Cidre (modération)", "Camembert", "Beurre", "Crème fraîche", "Escalope de veau", "Carottes", "Œufs", "Pain de campagne", "Poireaux"] },
+  { id: "grand-est", name: "Grand Est", lat: 48.6, lon: 6.2,
+    tip: "Choucroute, poissons de rivière et pâtisseries énergiques pour le vélo.",
+    local: ["Choucroute", "Pomme de terre", "Filet de truite", "Bière (modération)", "Miel", "Pain d'épices", "Munster", "Quetsches", "Pâtes complètes", "Lard fumé"] },
+  { id: "sud-ouest", name: "Sud-Ouest", lat: 43.6, lon: 1.4,
+    tip: "Duck, foie gras occasionnel, fruits et légumes méditerranéens riches en antioxydants.",
+    local: ["Confit de canard", "Haricots tarbais", "Tomates", "Poivrons", "Melon", "Prunes", "Noix", "Fromage de brebis", "Salade verte", "Poulet fermier"] },
+  { id: "provence", name: "Provence / Côte d'Azur", lat: 43.5, lon: 5.8,
+    tip: "Chaleur : privilégiez l'hydratation, fruits juteux et huile d'olive.",
+    local: ["Tomates", "Courgettes", "Aubergines", "Olives", "Huile d'olive", "Pastèque", "Abricots", "Fruits secs", "Chèvre", "Lavande (miel)", "Anchois"] },
+  { id: "massif-central", name: "Massif central / Auvergne", lat: 45.4, lon: 3.0,
+    tip: "Fromages, lentilles et charcuterie : énergie longue pour les cols.",
+    local: ["Lentilles vertes du Puy", "Saint-Nectaire", "Jambon d'Auvergne", "Pommes de terre", "Châtaignes", "Miels de montagne", "Pain de seigle", "Salade", "Yaourt", "Carottes"] },
+  { id: "alpes", name: "Alpes", lat: 45.9, lon: 6.6,
+    tip: "Altitude : glucides complexes, fromages et bonne hydratation.",
+    local: ["Pâtes complètes", "Riz", "Beaufort", "Tartiflette (fromage)", "Pommes de terre", "Jambon de montagne", "Myrtilles", "Miel de montagne", "Pain aux céréales", "Oeufs"] },
+  { id: "pyrenees", name: "Pyrénées", lat: 42.9, lon: 0.6,
+    tip: "Charcuteries, fromages de brebis et fruits de vallée.",
+    local: ["Fromage de brebis (Ossau)", "Jambon de Bayonne", "Pain", "Pommes", "Cerises", "Maïs", "Poulet", "Haricots", "Yaourt", "Fruits secs"] },
+  { id: "grand-nord", name: "Hauts-de-France", lat: 50.3, lon: 3.0,
+    tip: "Endives, betteraves et produits de la mer : fibres et fer.",
+    local: ["Endives", "Betteraves", "Poisson fumé", "Maroilles", "Pommes de terre", "Pain", "Bières (modération)", "Caroubes / sucreries (occasion)", "Œufs", "Poulet"] },
+  { id: "loire", name: "Vallée de la Loire", lat: 47.4, lon: 1.0,
+    tip: "Fruits et légumes du val, chèvres et poissons de rivière.",
+    local: ["Poireaux", "Pommes", "Poires", "Chèvres (Sainte-Maure)", "Sandre / poisson de rivière", "Pain complet", "Riz", "Salade", "Lentilles", "Fraises"] },
+  { id: "outre-mer", name: "Outre-mer (tropical)", lat: 14.6, lon: -61.0,
+    tip: "Chaleur tropicale : fruits hydratants, igname, attention à la conservation.",
+    local: ["Bananes", "Mangues", "Fruits de la passion", "Igname", "Patate douce", "Poisson frais", "Poulet", "Riz", "Légumes pays (chou, christophine)", "Noix de coco", "Eau en grande quantité"] },
+];
+
+// ---------- Catégories nutritionnelles ----------
+const CATEGORIES = {
+  "Féculents":      ["Pâtes complètes", "Riz", "Pain complet", "Pain de seigle", "Pommes de terre", "Couscous", "Boulgour", "Lentilles vertes du Puy", "Haricots", "Choucroute", "Flocons d'avoine", "Igname", "Patate douce", "Maïs"],
+  "Protéines":      ["Sardines", "Maquereau", "Poulet fermier", "Œufs", "Jambon d'Auvergne", "Confit de canard", "Lentilles vertes du Puy", "Poisson frais", "Crevettes grises", "Escalope de veau", "Anchois", "Tofu", "Fruits secs", "Noix", "Haricots tarbais"],
+  "Légumes":        ["Tomates", "Courgettes", "Poireaux", "Carottes", "Chou-fleur", "Endives", "Betteraves", "Aubergines", "Poivrons", "Salade verte", "Chou", "Christophine", "Oignons de Roscoff"],
+  "Fruits":         ["Pommes", "Poires", "Melon", "Pastèque", "Abricots", "Cerises", "Prunes", "Quetsches", "Myrtilles", "Bananes", "Mangues", "Fraises", "Fruits de la passion", "Fruits secs", "Châtaignes"],
+  "Produits laitiers": ["Camembert", "Saint-Nectaire", "Beaufort", "Munster", "Chèvre", "Fromage de brebis (Ossau)", "Yaourt", "Lait ribot", "Beurre", "Beurre demi-sel", "Crème fraîche"],
+  "Matières grasses": ["Huile d'olive", "Noix", "Beurre", "Beurre demi-sel", "Miel", "Miels de montagne", "Miel de montagne", "Olives"],
+  "Boissons":       ["Eau en grande quantité", "Cidre (modération)", "Bière (modération)", "Jus de fruits", "Lait ribot"],
+};
+
+const NUTRI_FAMILIES = [
+  { key: "Féculents",        label: "Féculents / énergie" },
+  { key: "Protéines",        label: "Protéines" },
+  { key: "Légumes",         label: "Légumes" },
+  { key: "Fruits",           label: "Fruits" },
+  { key: "Produits laitiers", label: "Produits laitiers" },
+  { key: "Matières grasses", label: "Matières grasses" },
+];
+
+// ---------- État ----------
+const LS_KEY = "velosillon.v1";
+let state = { zone: "bretagne", activeCat: "Féculents", items: [] };
+
+function load() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) state = Object.assign(state, JSON.parse(raw));
+  } catch (e) { /* stockage indisponible : session en mémoire */ }
+  if (!Zones().find(z => z.id === state.zone)) state.zone = ZONES[0].id;
+}
+function save() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {}
+}
+function Zones() { return ZONES; }
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+function catOf(name) {
+  for (const [cat, prods] of Object.entries(CATEGORIES))
+    if (prods.includes(name)) return cat;
+  return null;
+}
+
+// ---------- Rendu ----------
+function renderZones() {
+  const sel = document.getElementById("zone");
+  sel.innerHTML = ZONES.map(z => `<option value="${z.id}">${z.name}</option>`).join("");
+  sel.value = state.zone;
+  const z = ZONES.find(x => x.id === state.zone);
+  document.getElementById("zone-info").innerHTML =
+    `<strong>${z.name}</strong> — ${z.tip}`;
+}
+
+function renderTabs() {
+  const tabs = document.getElementById("cat-tabs");
+  tabs.innerHTML = Object.keys(CATEGORIES).map(c =>
+    `<span class="cat-tab ${c === state.activeCat ? "active" : ""}" data-cat="${c}">${c}</span>`
+  ).join("");
+  tabs.querySelectorAll(".cat-tab").forEach(el =>
+    el.addEventListener("click", () => { state.activeCat = el.dataset.cat; save(); renderTabs(); renderSuggestions(); }));
+}
+
+function renderSuggestions() {
+  const z = ZONES.find(x => x.id === state.zone);
+  const base = CATEGORIES[state.activeCat] || [];
+  const localFirst = [...z.local].filter(p => catOf(p) === state.activeCat);
+  const rest = base.filter(p => !localFirst.includes(p));
+  const all = [...new Set([...localFirst, ...rest])];
+  document.getElementById("suggestions").innerHTML =
+    all.map(p => `<span class="sugg" data-name="${p}">${p}</span>`).join("");
+  document.querySelectorAll(".sugg").forEach(el =>
+    el.addEventListener("click", () => addItem(el.dataset.name)));
+}
+
+function renderList() {
+  const ul = document.getElementById("list");
+  document.getElementById("empty-msg").style.display = state.items.length ? "none" : "block";
+  ul.innerHTML = state.items.map((it, i) => {
+    const c = catOf(it.name);
+    return `<li class="${it.done ? "done" : ""}" data-i="${i}">
+      <input type="checkbox" class="check" ${it.done ? "checked" : ""}>
+      <span class="name">${it.name}</span>
+      ${c ? `<span class="tag">${c}</span>` : ""}
+      <span class="qty">×${it.qty}</span>
+      <button class="small ghost" data-del="${i}">✕</button>
+    </li>`;
+  }).join("");
+  ul.querySelectorAll("li").forEach(li => {
+    const i = +li.dataset.i;
+    li.querySelector(".check").addEventListener("change", e => {
+      state.items[i].done = e.target.checked; save(); renderList(); renderBars();
+    });
+    li.querySelector("[data-del]").addEventListener("click", () => {
+      state.items.splice(i, 1); save(); renderList(); renderSuggestions(); renderBars();
+    });
+  });
+}
+
+function renderBars() {
+  const counts = {};
+  for (const it of state.items) {
+    if (it.done) continue;
+    const c = catOf(it.name);
+    if (c) counts[c] = (counts[c] || 0) + it.qty;
+  }
+  document.getElementById("bars").innerHTML = NUTRI_FAMILIES.map(f => {
+    const pct = Math.min(100, Math.round((counts[f.key] || 0) / 4 * 100));
+    const ok = (counts[f.key] || 0) > 0 ? "✓" : "";
+    return `<div>
+      <div class="bar-label">${f.label} ${ok}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join("");
+}
+
+// ---------- Actions ----------
+function addItem(name, qty = 1) {
+  const ex = state.items.find(it => it.name === name && !it.done);
+  if (ex) { ex.qty += qty; toast(`+1 ${name}`); }
+  else { state.items.push({ name, qty, done: false }); toast(`${name} ajouté`); }
+  save(); renderList(); renderBars();
+}
+
+function nearestZone(lat, lon) {
+  let best = ZONES[0], bestD = Infinity;
+  for (const z of ZONES) {
+    const d = (z.lat - lat) ** 2 + ((z.lon - lon) * Math.cos(lat * Math.PI / 180)) ** 2;
+    if (d < bestD) { bestD = d; best = z; }
+  }
+  return best;
+}
+
+// ---------- Init ----------
+document.getElementById("zone").addEventListener("change", e => {
+  state.zone = e.target.value; save();
+  renderZones(); renderSuggestions();
+});
+document.getElementById("btn-add").addEventListener("click", () => {
+  const inp = document.getElementById("new-item");
+  const q = document.getElementById("new-qty");
+  const name = inp.value.trim();
+  if (!name) return;
+  addItem(name, Math.max(1, parseInt(q.value || "1", 10)));
+  inp.value = ""; q.value = "";
+});
+document.getElementById("new-item").addEventListener("keydown", e => {
+  if (e.key === "Enter") document.getElementById("btn-add").click();
+});
+document.getElementById("btn-geo").addEventListener("click", () => {
+  if (!navigator.geolocation) { toast("Géolocalisation non disponible"); return; }
+  toast("Localisation en cours…");
+  navigator.geolocation.getCurrentPosition(pos => {
+    const z = nearestZone(pos.coords.latitude, pos.coords.longitude);
+    state.zone = z.id; save();
+    renderZones(); renderSuggestions();
+    toast(`Zone détectée : ${z.name}`);
+  }, () => toast("Position refusée — choisissez une zone"), { timeout: 8000 });
+});
+document.getElementById("btn-reset").addEventListener("click", () => {
+  if (!state.items.length) return;
+  if (confirm("Vider toute la liste ?")) {
+    state.items = []; save(); renderList(); renderBars();
+  }
+});
+
+load();
+renderZones(); renderTabs(); renderSuggestions(); renderList(); renderBars();
+</script>
+</body>
+</html>
