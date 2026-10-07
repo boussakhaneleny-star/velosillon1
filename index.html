@@ -6,141 +6,213 @@
 <title>VeloSillon — Liste de courses à vélo</title>
 <style>
   :root {
-    --bg: #f4f1ea;
+    --bg: #f6f4ef;
     --card: #ffffff;
-    --accent: #2e7d32;
-    --accent-light: #e8f5e9;
+    --accent: #2f7d4f;
+    --accent-2: #f28c28;
+    --accent-light: #eaf5ec;
     --text: #2b2b2b;
-    --muted: #7a7a7a;
-    --border: #e0ddd4;
+    --muted: #8a8578;
+    --border: #e6e2d8;
     --danger: #c62828;
+    --shadow: 0 4px 14px rgba(60, 60, 40, .08);
+    --radius: 16px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
-    background: var(--bg);
+    background:
+      radial-gradient(circle at 15% 5%, rgba(242, 140, 40, .10) 0 180px, transparent 200px),
+      radial-gradient(circle at 90% 40%, rgba(47, 125, 79, .10) 0 260px, transparent 280px),
+      var(--bg);
     color: var(--text);
     line-height: 1.5;
     padding-bottom: 80px;
   }
   header {
-    background: var(--accent);
+    background: linear-gradient(135deg, #1e5f3a 0%, #2f7d4f 55%, #4c9d63 100%);
     color: #fff;
-    padding: 16px 20px;
+    padding: 22px 20px 26px;
     position: sticky;
     top: 0;
     z-index: 10;
-    box-shadow: 0 2px 6px rgba(0,0,0,.15);
+    box-shadow: 0 6px 20px rgba(30, 95, 58, .35);
+    border-radius: 0 0 24px 24px;
   }
-  header h1 { font-size: 1.2rem; }
-  header p { font-size: .8rem; opacity: .9; }
-  .wrap { max-width: 720px; margin: 0 auto; padding: 16px; }
+  header h1 { font-size: 1.35rem; letter-spacing: .3px; }
+  header p { font-size: .8rem; opacity: .92; margin-top: 2px; }
+  header .badge {
+    display: inline-block; margin-top: 6px;
+    background: rgba(255,255,255,.18);
+    border: 1px solid rgba(255,255,255,.35);
+    border-radius: 20px;
+    padding: 2px 12px; font-size: .7rem;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 18px 16px; }
   .card {
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 14px;
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+    transition: transform .15s ease, box-shadow .15s ease;
   }
-  h2 { font-size: 1rem; margin-bottom: 10px; color: var(--accent); }
+  h2 { font-size: 1.05rem; margin-bottom: 12px; color: var(--accent); }
   select, input[type="text"], input[type="number"] {
     font: inherit;
-    padding: 8px 10px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
     background: #fff;
     width: 100%;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  select:focus, input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(47, 125, 79, .15);
   }
   .row { display: flex; gap: 8px; margin-top: 10px; }
   .row > * { flex: 1; }
   button {
     font: inherit;
     border: none;
-    border-radius: 8px;
-    padding: 8px 14px;
+    border-radius: 12px;
+    padding: 10px 16px;
     cursor: pointer;
-    background: var(--accent);
+    background: linear-gradient(135deg, #2f7d4f, #4c9d63);
     color: #fff;
+    box-shadow: 0 3px 8px rgba(47, 125, 79, .3);
+    transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
   }
-  button.ghost { background: var(--accent-light); color: var(--accent); }
-  button.small { padding: 4px 8px; font-size: .8rem; }
+  button:hover { transform: translateY(-1px); box-shadow: 0 5px 12px rgba(47, 125, 79, .35); }
+  button:active { transform: translateY(1px); box-shadow: none; }
+  button.ghost {
+    background: var(--accent-light);
+    color: var(--accent);
+    box-shadow: none;
+    border: 1.5px solid rgba(47, 125, 79, .25);
+  }
+  button.ghost:hover { border-color: var(--accent); background: #ddf0e2; }
+  button.small { padding: 5px 10px; font-size: .8rem; border-radius: 10px; }
+  button.del {
+    background: #fbe9e7;
+    color: var(--danger);
+    box-shadow: none;
+    border: 1px solid rgba(198, 40, 40, .15);
+  }
   .zone-info {
-    background: var(--accent-light);
-    border-radius: 8px;
-    padding: 10px 12px;
+    background: linear-gradient(135deg, var(--accent-light), #f7fbf5);
+    border: 1px solid rgba(47, 125, 79, .18);
+    border-radius: 12px;
+    padding: 12px 14px;
     font-size: .85rem;
-    margin-top: 10px;
+    margin-top: 12px;
   }
-  .cat-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .cat-tabs { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
   .cat-tab {
-    padding: 5px 12px;
+    padding: 6px 14px;
     border-radius: 20px;
-    background: var(--accent-light);
+    background: #fff;
     color: var(--accent);
     cursor: pointer;
     font-size: .82rem;
-    border: 1px solid transparent;
+    border: 1.5px solid var(--border);
+    transition: all .15s ease;
+    user-select: none;
   }
-  .cat-tab.active { background: var(--accent); color: #fff; }
-  .suggestions { display: flex; flex-wrap: wrap; gap: 6px; }
+  .cat-tab:hover { border-color: var(--accent); }
+  .cat-tab.active {
+    background: linear-gradient(135deg, #2f7d4f, #4c9d63);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 3px 8px rgba(47, 125, 79, .3);
+  }
+  .suggestions { display: flex; flex-wrap: wrap; gap: 8px; }
   .sugg {
     background: #fff;
-    border: 1px dashed var(--accent);
-    color: var(--accent);
+    border: 1.5px dashed rgba(47, 125, 79, .5);
+    color: var(--text);
     border-radius: 20px;
-    padding: 5px 12px;
+    padding: 6px 12px;
     font-size: .82rem;
     cursor: pointer;
+    transition: all .13s ease;
   }
-  .sugg:hover { background: var(--accent-light); }
+  .sugg:hover {
+    background: var(--accent-light);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(47, 125, 79, .15);
+  }
+  .sugg.local {
+    border-style: solid;
+    border-color: var(--accent-2);
+    background: linear-gradient(135deg, #fff8f0, #fff);
+  }
+  .sugg .price { font-size: .68rem; margin-left: 5px; color: var(--accent-2); opacity: .85; font-weight: 600; }
   ul.list { list-style: none; }
   ul.list li {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 8px 4px;
-    border-bottom: 1px solid var(--border);
+    padding: 10px 6px;
+    border-bottom: 1px dashed var(--border);
+    animation: fadein .25s ease;
   }
+  @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
   ul.list li.done .name { text-decoration: line-through; color: var(--muted); }
   ul.list .name { flex: 1; }
-  ul.list .qty { color: var(--muted); font-size: .85rem; white-space: nowrap; }
+  ul.list .qty { color: var(--muted); font-size: .85rem; white-space: nowrap; background: var(--bg); padding: 2px 10px; border-radius: 10px; }
   .tag {
     font-size: .68rem;
-    padding: 2px 8px;
+    padding: 3px 10px;
     border-radius: 10px;
     background: var(--accent-light);
     color: var(--accent);
     white-space: nowrap;
+    font-weight: 600;
   }
   .check {
-    width: 20px; height: 20px;
+    width: 22px; height: 22px;
     accent-color: var(--accent);
     flex-shrink: 0;
+    cursor: pointer;
   }
-  .bars { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; }
-  .bar-label { font-size: .75rem; margin-bottom: 3px; }
-  .bar-track { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
-  .bar-fill { height: 100%; background: var(--accent); transition: width .3s; }
-  .empty { color: var(--muted); font-size: .85rem; text-align: center; padding: 12px; }
+  .bars { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 12px; }
+  .bar-label { font-size: .75rem; margin-bottom: 4px; font-weight: 600; }
+  .bar-track { height: 10px; background: var(--border); border-radius: 6px; overflow: hidden; }
+  .bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #f28c28, #2f7d4f);
+    border-radius: 6px;
+    transition: width .4s ease;
+  }
+  .empty { color: var(--muted); font-size: .85rem; text-align: center; padding: 14px; }
   .toast {
-    position: fixed; bottom: 20px; left: 50%;
-    transform: translateX(-50%);
-    background: #333; color: #fff;
-    padding: 10px 18px; border-radius: 8px;
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(8px);
+    background: #2b2b2b; color: #fff;
+    padding: 12px 20px; border-radius: 14px;
     font-size: .85rem; opacity: 0;
-    transition: opacity .3s; pointer-events: none;
+    transition: opacity .3s, transform .3s; pointer-events: none;
+    box-shadow: 0 6px 18px rgba(0,0,0,.25);
+    max-width: 90vw;
   }
-  .toast.show { opacity: 1; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   footer {
     text-align: center; font-size: .72rem; color: var(--muted);
-    padding: 16px;
+    padding: 18px;
   }
+  .legend { font-size: .72rem; color: var(--muted); margin-top: 12px; }
+  .legend .local-dot { color: var(--accent-2); font-weight: 700; }
 </style>
 </head>
 <body>
 <header>
   <h1>🚴 VeloSillon — Courses du voyage</h1>
   <p>Liste de courses par zone géographique, pour une alimentation variée et riche.</p>
+  <span class="badge">🌍 40+ pays d'Europe · 💾 100% hors-ligne</span>
 </header>
 
 <div class="wrap">
@@ -169,7 +241,7 @@
   </div>
 
   <div class="card">
-    <h2>🛒 Ma liste de courses</h2>
+    <h2>🛒 Ma liste de courses <span id="item-count" style="font-size:.75rem;color:var(--muted);font-weight:400"></span></h2>
     <div class="row" style="margin-top:0">
       <input type="text" id="new-item" placeholder="Ajouter un produit…" style="flex:2">
       <input type="number" id="new-qty" placeholder="Qté" min="1" style="flex:1">
@@ -505,7 +577,9 @@ function renderSuggestions() {
 
 function renderList() {
   const ul = document.getElementById("list");
-  document.getElementById("empty-msg").style.display = state.items.length ? "none" : "block";
+  const n = state.items.length;
+  document.getElementById("item-count").textContent = n ? `(${n} article${n > 1 ? "s" : ""})` : "";
+  document.getElementById("empty-msg").style.display = n ? "none" : "block";
   ul.innerHTML = state.items.map((it, i) => {
     const c = catOf(it.name);
     return `<li class="${it.done ? "done" : ""}" data-i="${i}">
@@ -513,7 +587,7 @@ function renderList() {
       <span class="name">${it.name}</span>
       ${c ? `<span class="tag">${c}</span>` : ""}
       <span class="qty">×${it.qty}</span>
-      <button class="small ghost" data-del="${i}">✕</button>
+      <button class="small del" data-del="${i}">🗑</button>
     </li>`;
   }).join("");
   ul.querySelectorAll("li").forEach(li => {
