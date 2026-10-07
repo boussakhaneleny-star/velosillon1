@@ -102,6 +102,27 @@
     box-shadow: none;
     border: 1px solid rgba(198, 40, 40, .15);
   }
+  .cook-toggle {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin-top: 12px; font-size: .85rem; font-weight: 600;
+  }
+  .seg { display: flex; border: 1.5px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .seg-btn {
+    border-radius: 0 !important; box-shadow: none !important;
+    background: #fff !important; color: var(--muted) !important;
+    padding: 7px 18px !important; font-weight: 700 !important;
+    border: none !important;
+  }
+  .seg-btn.active { background: var(--accent) !important; color: #fff !important; }
+  #cook-no.seg-btn.active { background: var(--accent-2) !important; }
+  .cook-warn {
+    display: none;
+    margin-top: 10px; padding: 10px 14px;
+    background: #fff3e0; border: 1px solid rgba(242, 140, 40, .4);
+    border-radius: 12px; font-size: .8rem;
+  }
+  .cook-warn.show { display: block; }
+  .cook-warn strong { color: #c96a00; }
   .zone-info {
     background: linear-gradient(135deg, var(--accent-light), #f7fbf5);
     border: 1px solid rgba(47, 125, 79, .18);
@@ -227,6 +248,14 @@
       <button class="ghost" id="btn-geo">🛰️ Détecter ma position</button>
       <button class="ghost" id="btn-reset">🗑️ Vider la liste</button>
     </div>
+    <div class="cook-toggle">
+      <span>🔥 Possibilité de cuire :</span>
+      <div class="seg">
+        <button type="button" id="cook-yes" class="seg-btn">Oui</button>
+        <button type="button" id="cook-no" class="seg-btn">Non</button>
+      </div>
+    </div>
+    <div class="cook-warn" id="cook-warn"></div>
     <div class="zone-info" id="zone-info"></div>
   </div>
 
@@ -470,6 +499,22 @@ const PRICE = {
   "Eau en grande quantité":1,"Eau pétillante":1,"Sirop (dilué, modération)":1,"Lait":1,"Lait ribot":1,"Café":2,"Thé / tisane":2,"Chocolat chaud (poudre)":2,"Jus de fruits":2,"Boisson isotonique (effort)":2,"Cidre (modération)":2,"Bière (modération)":2,"Bières (modération)":2,"Eau de coco":3,"Smoothie / jus mixés":3,
 };
 
+// ---------- Produits nécessitant une cuisson ----------
+const NEEDS_COOKING = new Set([
+  "Pâtes complètes","Riz","Riz complet","Couscous","Boulgour","Quinoa","Semoule","Polenta",
+  "Lentilles","Lentilles vertes du Puy","Pois chiches","Haricots","Haricots tarbais","Haricots verts",
+  "Choucroute","Pommes de terre","Patate douce","Igname","Gnocchis","Nouilles chinoises",
+  "Farine de sarrasin","Pain d'épices","Muesli","Flocons d'avoine",
+  "Poulet fermier","Poulet","Dinde","Escalope de veau","Agneau","Steak de soja","Tofu",
+  "Saucisse sèche","Saucisson","Jambon blanc","Jambon d'Auvergne","Jambon serrano","Lardons","Lard fumé",
+  "Pâté / terrine","Confit de canard","Bœuf séché","Viande de renne","Renne / viande","Filet de truite","Truite",
+  "Poisson frais","Cabillaud","Saumon","Poulpe","Merlu","Poisson de lac","Poisson de rivière","Sandre (poisson de rivière)",
+  "Filet de perche (poisson)","Poisson fumé","Anchois","Champignons sauvages","Crevettes grises",
+  "Œufs","Betteraves","Navets","Chou","Chou rouge","Chou-fleur","Brocoli","Chou kale","Fenouil","Rhubarbe",
+  "Châtaignes","Courge / potiron","Petits pois","Maïs","Blé / céréales à cuire","Mamaliga / polenta",
+  "Figatellu (charcuterie)","Gbejniet (fromage affiné)","Lavande (miel)",
+]);
+
 const NUTRI_FAMILIES = [
   { key: "Féculents",        label: "Féculents / énergie" },
   { key: "Protéines",        label: "Protéines" },
@@ -481,7 +526,7 @@ const NUTRI_FAMILIES = [
 
 // ---------- État ----------
 const LS_KEY = "velosillon.v1";
-let state = { country: "France", region: "Bretagne", activeCat: "Féculents", items: [] };
+let state = { country: "France", region: "Bretagne", activeCat: "Féculents", canCook: true, items: [] };
 
 function load() {
   try {
@@ -489,6 +534,7 @@ function load() {
     if (raw) {
       const s = JSON.parse(raw);
       state = Object.assign(state, s);
+      if (typeof state.canCook !== "boolean") state.canCook = true;
       // migration depuis l'ancienne version (zone unique)
       if (s.zone) {
         const m = { bretagne: ["France", "Bretagne"], normandie: ["France", "Normandie"],
@@ -560,7 +606,8 @@ function renderSuggestions() {
   } else {
     rest = base.filter(p => !localFirst.includes(p));
   }
-  const all = [...new Set([...localFirst, ...rest])];
+  let all = [...new Set([...localFirst, ...rest])];
+  if (!state.canCook) all = all.filter(p => !NEEDS_COOKING.has(p));
   all.sort((a, b) => (PRICE[a] || 2) - (PRICE[b] || 2));
   document.getElementById("suggestions").innerHTML =
     all.length
@@ -570,7 +617,7 @@ function renderSuggestions() {
           const isLocal = z.local.includes(p);
           return `<span class="sugg ${isLocal ? "local" : ""}" data-name="${p}" title="${isLocal ? "Spécialité locale — " : ""}Indice de prix : ${"€".repeat(pr)}">${p}<span class="price">${euro}</span></span>`;
         }).join("")
-      : `<span class="empty">Aucun produit trouvé pour « ${filter} »</span>`;
+      : `<span class="empty">Aucun produit trouvé pour « ${filter} »${!state.canCook ? " — essayez d'activer la cuisson ou changez de catégorie" : ""}</span>`;
   document.querySelectorAll(".sugg").forEach(el =>
     el.addEventListener("click", () => addItem(el.dataset.name)));
 }
@@ -579,6 +626,20 @@ function renderList() {
   const ul = document.getElementById("list");
   const n = state.items.length;
   document.getElementById("item-count").textContent = n ? `(${n} article${n > 1 ? "s" : ""})` : "";
+  const warn = document.getElementById("cook-warn");
+  if (!state.canCook) {
+    const toCook = state.items.filter(it => !it.done && NEEDS_COOKING.has(it.name));
+    if (toCook.length) {
+      warn.innerHTML = `⚠️ <strong>Mode sans cuisson actif</strong> — ces articles de votre liste nécessitent une cuisson : ${toCook.map(i => "<strong>" + i.name + "</strong>").join(", ")}. Remplacez-les par des produits mangeables crus.`;
+      warn.classList.add("show");
+    } else {
+      warn.innerHTML = `✅ Mode sans cuisson actif — tous vos articles peuvent être consommés crus.`;
+      warn.classList.add("show");
+    }
+  } else {
+    warn.classList.remove("show");
+    warn.innerHTML = "";
+  }
   document.getElementById("empty-msg").style.display = n ? "none" : "block";
   ul.innerHTML = state.items.map((it, i) => {
     const c = catOf(it.name);
@@ -654,6 +715,17 @@ document.getElementById("btn-add").addEventListener("click", () => {
   addItem(name, Math.max(1, parseInt(q.value || "1", 10)));
   inp.value = ""; q.value = "";
 });
+function renderCookToggle() {
+  document.getElementById("cook-yes").classList.toggle("active", state.canCook);
+  document.getElementById("cook-no").classList.toggle("active", !state.canCook);
+}
+document.getElementById("cook-yes").addEventListener("click", () => {
+  state.canCook = true; save(); renderCookToggle(); renderSuggestions(); renderList();
+});
+document.getElementById("cook-no").addEventListener("click", () => {
+  state.canCook = false; save(); renderCookToggle(); renderSuggestions(); renderList();
+  toast("🔥 Mode sans cuisson : produits crus uniquement");
+});
 document.getElementById("sugg-search").addEventListener("input", renderSuggestions);
 document.getElementById("new-item").addEventListener("keydown", e => {
   if (e.key === "Enter") document.getElementById("btn-add").click();
@@ -676,7 +748,7 @@ document.getElementById("btn-reset").addEventListener("click", () => {
 });
 
 load();
-renderZones(); renderTabs(); renderSuggestions(); renderList(); renderBars();
+renderZones(); renderTabs(); renderCookToggle(); renderSuggestions(); renderList(); renderBars();
 </script>
 </body>
 </html>
