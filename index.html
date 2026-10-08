@@ -43,15 +43,23 @@
   header h1 { font-size: 1.35rem; letter-spacing: .3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 52px; }
   header p { font-size: .8rem; opacity: .92; margin-top: 2px; }
   header .badge { display: inline-block; }
-  header p, header .badge {
-    transition: opacity .18s ease, margin .18s ease, padding .18s ease, max-height .18s ease, transform .18s ease;
-    max-height: 40px; overflow: hidden;
+  header {
+    padding: calc(22px - 12px * var(--h, 0)) 20px calc(26px - 14px * var(--h, 0));
+    will-change: padding;
   }
-  header { transition: padding .18s ease; }
-  header.compact { padding: 10px 20px 12px; }
-  header.compact h1 { font-size: 1.35rem; }
-  header.compact p { opacity: 0; margin-top: 0; max-height: 0; }
-  header.compact .badge { opacity: 0; margin-top: 0; padding-top: 0; padding-bottom: 0; max-height: 0; border-width: 0; }
+  header p {
+    opacity: calc(.92 * (1 - var(--h, 0)));
+    margin-top: calc(2px - 2px * var(--h, 0));
+    max-height: calc(40px * (1 - var(--h, 0)));
+    overflow: hidden;
+  }
+  header .badge {
+    opacity: 1 - var(--h, 0);
+    margin-top: calc(6px - 6px * var(--h, 0));
+    padding: calc(2px - 1px * var(--h, 0)) calc(12px - 4px * var(--h, 0));
+    max-height: calc(24px * (1 - var(--h, 0)));
+    overflow: hidden;
+  }
   header.compact #btn-theme { top: 50%; transform: translateY(-50%); }
   header .badge {
     display: inline-block; margin-top: 6px;
@@ -1697,11 +1705,15 @@ document.getElementById("cook-no").addEventListener("click", () => {
 // ---------- En-tête compact au défilement ----------
 const headerEl = document.querySelector("header");
 let lastScrollY = 0;
-function onScroll() {
+let rafPending = false;
+function updateShrink() {
+  rafPending = false;
   const y = window.scrollY || document.documentElement.scrollTop;
-  const compact = headerEl.classList.contains("compact");
-  if (!compact && y > 60) headerEl.classList.add("compact");
-  else if (compact && y < 20) headerEl.classList.remove("compact");
+  const t = Math.max(0, Math.min(1, y / 60));
+  headerEl.style.setProperty("--h", t.toFixed(3));
+}
+function onScroll() {
+  if (!rafPending) { rafPending = true; requestAnimationFrame(updateShrink); }
 }
 window.addEventListener("scroll", onScroll, { passive: true });
 document.getElementById("sugg-search").addEventListener("input", renderSuggestions);
