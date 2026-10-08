@@ -40,10 +40,11 @@
     box-shadow: 0 6px 20px rgba(30, 95, 58, .35);
     border-radius: 0 0 24px 24px;
   }
-  header h1 { font-size: 1.35rem; letter-spacing: .3px; white-space: nowrap; }
+  header h1 { font-size: 1.35rem; letter-spacing: .3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 52px; }
   header p { font-size: .8rem; opacity: .92; margin-top: 2px; }
   header .badge { display: inline-block; }
   header .badge, header p, header h1 { transition: none; }
+  header { transition: padding .2s ease; }
   header.compact { padding: 10px 20px 12px; }
   header.compact h1 { font-size: 1.35rem; }
   header.compact p { display: none; }
@@ -1695,9 +1696,9 @@ const headerEl = document.querySelector("header");
 let lastScrollY = 0;
 function onScroll() {
   const y = window.scrollY || document.documentElement.scrollTop;
-  if (y > 40) headerEl.classList.add("compact");
-  else headerEl.classList.remove("compact");
-  lastScrollY = y;
+  const compact = headerEl.classList.contains("compact");
+  if (!compact && y > 60) headerEl.classList.add("compact");
+  else if (compact && y < 20) headerEl.classList.remove("compact");
 }
 window.addEventListener("scroll", onScroll, { passive: true });
 document.getElementById("sugg-search").addEventListener("input", renderSuggestions);
