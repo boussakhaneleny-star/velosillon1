@@ -30,6 +30,7 @@
     padding-bottom: 80px;
   }
   header {
+    position: relative;
     background: linear-gradient(135deg, #1e5f3a 0%, #2f7d4f 55%, #4c9d63 100%);
     color: #fff;
     padding: 22px 20px 26px;
@@ -321,10 +322,60 @@
   }
   .legend { font-size: .72rem; color: var(--muted); margin-top: 12px; }
   .legend .local-dot { color: var(--accent-2); font-weight: 700; }
+  #btn-theme {
+    position: absolute;
+    top: 18px;
+    right: 16px;
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    padding: 0;
+    font-size: 1.1rem;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,.15);
+    box-shadow: none;
+    border: 1px solid rgba(255,255,255,.35);
+  }
+  body.dark {
+    --bg: #12141a;
+    --card: #1c1f27;
+    --accent: #4c9d63;
+    --accent-2: #f0a35e;
+    --accent-light: #22301f;
+    --text: #e8e6e1;
+    --muted: #9a958c;
+    --border: #32363f;
+    --shadow: 0 4px 14px rgba(0, 0, 0, .35);
+  }
+  body.dark header {
+    background: linear-gradient(135deg, #0f2d1c 0%, #1d4a30 55%, #2c6a44 100%);
+  }
+  body.dark select, body.dark input[type="text"], body.dark input[type="number"] {
+    background: var(--card);
+    color: var(--text);
+  }
+  body.dark .cat-tab { background: var(--card); }
+  body.dark .sugg { background: var(--card); }
+  body.dark .sugg.local {
+    background: linear-gradient(135deg, #2a2118, var(--card));
+  }
+  body.dark .seg-btn { background: var(--card) !important; }
+  body.dark button.ghost {
+    background: var(--accent-light);
+    border-color: rgba(76, 157, 99, .35);
+  }
+  body.dark .zone-info {
+    background: linear-gradient(135deg, var(--accent-light), #182016);
+  }
+  body.dark .bio-need, body.dark .kcal-days { background: var(--accent-light); }
+  body.dark .cook-warn { background: #33270f; }
+  body.dark .toast { background: #e8e6e1; color: #1c1f27; }
+  body.dark ul.list .qty { background: var(--bg); }
+  body.dark button.del { background: #3a1f1f; border-color: rgba(198,40,40,.3); }
 </style>
 </head>
 <body>
 <header>
+  <button id="btn-theme" title="Basculer jour / nuit" aria-label="Basculer le thème">🌙</button>
   <h1>🚴 VeloSillon — Courses du voyage</h1>
   <p>Liste de courses par zone géographique, pour une alimentation variée et riche.</p>
   <span class="badge">🌍 40+ pays d'Europe · 💾 100% hors-ligne</span>
@@ -1440,7 +1491,19 @@ document.getElementById("btn-reset").addEventListener("click", () => {
   }
 });
 
+function applyTheme() {
+  document.body.classList.toggle("dark", state.theme === "dark");
+  const b = document.getElementById("btn-theme");
+  if (b) b.textContent = state.theme === "dark" ? "☀️" : "🌙";
+}
+document.getElementById("btn-theme").addEventListener("click", () => {
+  state.theme = state.theme === "dark" ? "light" : "dark";
+  save(); applyTheme();
+  toast(state.theme === "dark" ? "🌙 Mode nuit activé" : "☀️ Mode jour activé");
+});
+
 load();
+applyTheme();
 renderZones(); renderTabs(); renderCookToggle(); renderSuggestions(); renderBio(); renderList(); renderBars();
 </script>
 </body>
