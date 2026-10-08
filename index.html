@@ -424,6 +424,42 @@
     <div class="cook-warn" id="cook-warn"></div>
     <div class="zone-info" id="zone-info"></div>
   </div>
+  <div class="card">
+    <h2>🚴 Ma journée à vélo</h2>
+    <div class="bio-grid">
+      <label>Distance du jour (km)
+        <input type="number" id="ride-km" placeholder="ex. 80" min="0" step="5">
+      </label>
+      <label>Dénivelé positif (m)
+        <input type="number" id="ride-dplus" placeholder="ex. 900" min="0" step="50">
+      </label>
+    </div>
+    <p style="font-size:.72rem;color:var(--muted);margin-top:8px">⚙️ Poids du vélo + bagages : <strong id="ride-bike-weight">26,5 kg</strong></p>
+    <div id="ride-result"></div>
+  </div>
+
+  <div class="card">
+    <h2>👤 Ma biometrie</h2>
+    <div class="bio-grid">
+      <label>Sexe
+        <select id="bio-sex">
+          <option value="h">Homme</option>
+          <option value="f">Femme</option>
+        </select>
+      </label>
+      <label>Âge
+        <input type="number" id="bio-age" placeholder="ex. 30" min="10" max="90">
+      </label>
+      <label>Poids (kg)
+        <input type="number" id="bio-weight" placeholder="ex. 70" min="30" max="200">
+      </label>
+      <label>Taille (cm)
+        <input type="number" id="bio-height" placeholder="ex. 175" min="120" max="220">
+      </label>
+    </div>
+    <div id="bio-result"></div>
+  </div>
+
 
   <div class="card">
     <h2>💡 Produits locaux suggérés</h2>
@@ -449,41 +485,7 @@
     <p class="empty" id="empty-msg">Aucun article — choisissez une zone et ajoutez des suggestions.</p>
   </div>
 
-  <div class="card">
-    <h2>👤 Ma biometrie</h2>
-    <div class="bio-grid">
-      <label>Sexe
-        <select id="bio-sex">
-          <option value="h">Homme</option>
-          <option value="f">Femme</option>
-        </select>
-      </label>
-      <label>Âge
-        <input type="number" id="bio-age" placeholder="ex. 30" min="10" max="90">
-      </label>
-      <label>Poids (kg)
-        <input type="number" id="bio-weight" placeholder="ex. 70" min="30" max="200">
-      </label>
-      <label>Taille (cm)
-        <input type="number" id="bio-height" placeholder="ex. 175" min="120" max="220">
-      </label>
-    </div>
-    <div id="bio-result"></div>
-  </div>
 
-  <div class="card">
-    <h2>🚴 Ma journée à vélo</h2>
-    <div class="bio-grid">
-      <label>Distance du jour (km)
-        <input type="number" id="ride-km" placeholder="ex. 80" min="0" step="5">
-      </label>
-      <label>Dénivelé positif (m)
-        <input type="number" id="ride-dplus" placeholder="ex. 900" min="0" step="50">
-      </label>
-    </div>
-    <p style="font-size:.72rem;color:var(--muted);margin-top:8px">⚙️ Poids du vélo + bagages : <strong id="ride-bike-weight">26,5 kg</strong></p>
-    <div id="ride-result"></div>
-  </div>
 
   <div class="card">
     <h2>🔥 Estimation calorique</h2>
