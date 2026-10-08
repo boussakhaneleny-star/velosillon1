@@ -955,13 +955,16 @@ function bioNeeds() {
     : 10 * w + 6.25 * h - 5 * age + 5;
   const rb = rideBurn();
   const riding = rb ? rb.kcal : 2500;
-  const kcal = Math.round((bmr * 1.4 + riding) / 50) * 50;
+  const dailyLife = Math.round(bmr * 1.4);
+  const kcal = Math.round((dailyLife + riding) / 50) * 50;
+  // eau : base 40 mL/kg + 0,5 L par 500 kcal de pédalage + compensation chaleur
+  const water = Math.round((w * 0.04 + (rb ? rb.kcal / 500 * 0.5 : 0)) * 10) / 10;
   return {
-    kcal,
+    kcal, bmr, dailyLife, riding,
     protein: Math.round(w * 1.5),
     carbs: Math.round(kcal * 0.55 / 4),
     fat: Math.round(kcal * 0.25 / 9),
-    water: Math.round(w * 0.04 * 10) / 10,
+    water,
   };
 }
 
@@ -969,15 +972,18 @@ function renderBio() {
   const r = bioNeeds();
   const box = document.getElementById("bio-result");
   if (!r) {
-    box.innerHTML = `<p class="empty" style="padding:6px">Remplissez sexe, âge, poids et taille pour calculer vos besoins quotidiens.</p>`;
+    box.innerHTML = '<p class="empty" style="padding:6px">Remplissez sexe, âge, poids et taille pour calculer vos besoins quotidiens.</p>';
   } else {
-    box.innerHTML = `<div class="bio-needs">
-      <div class="bio-need"><div class="v">${r.kcal.toLocaleString("fr-FR")}</div><div class="l">kcal / jour (vélo)</div></div>
-      <div class="bio-need"><div class="v">${r.protein} g</div><div class="l">protéines / jour</div></div>
-      <div class="bio-need"><div class="v">${r.carbs} g</div><div class="l">glucides / jour</div></div>
-      <div class="bio-need"><div class="v">${r.fat} g</div><div class="l">lipides / jour</div></div>
-      <div class="bio-need"><div class="v">${r.water} L</div><div class="l">eau / jour (minimum)</div></div>
-    </div>`;
+    const ridePct = Math.round(r.riding / r.kcal * 100);
+    box.innerHTML = '<div class="bio-needs">' +
+      '<div class="bio-need"><div class="v">' + r.kcal.toLocaleString("fr-FR") + '</div><div class="l">kcal / jour au total</div></div>' +
+      '<div class="bio-need"><div class="v">' + r.protein + ' g</div><div class="l">protéines / jour</div></div>' +
+      '<div class="bio-need"><div class="v">' + r.carbs + ' g</div><div class="l">glucides / jour</div></div>' +
+      '<div class="bio-need"><div class="v">' + r.fat + ' g</div><div class="l">lipides / jour</div></div>' +
+      '<div class="bio-need"><div class="v">' + r.water + ' L</div><div class="l">eau / jour (incl. pédalage)</div></div>' +
+    '</div>' +
+    '<p class="ride-detail">U0001F9EE ' + r.bmr.toLocaleString("fr-FR") + ' kcal métabolisme de base × 1,4 vie quotidienne = ' + r.dailyLife.toLocaleString("fr-FR") + ' kcal<br>' +
+    'U0001F6B4 + ' + r.riding.toLocaleString("fr-FR") + ' kcal de pédalage (' + ridePct + ' % du total' + (state.ride && state.ride.km ? ' — ' + state.ride.km + ' km / ' + (state.ride.dplus || 0) + ' m D+' : ' — estimation par défaut') + ')</p>';
   }
   renderKcal();
 }
@@ -1492,7 +1498,7 @@ function renderKcal() {
   const daysTxt = days >= 1
     ? `≈ <strong>${days >= 10 ? Math.round(days) : days.toFixed(1)} jour${days >= 2 ? "s" : ""}</strong> de ravitaillement`
     : `≈ <strong>${Math.round(days * 24)} h</strong> de ravitaillement`;
-  const basis = needs ? `sur la base de <strong>${daily.toLocaleString("fr-FR")} kcal/jour</strong> (vos données biométriques)` : `sur la base de 3 500 kcal/jour (moyenne cycliste — remplissez la biometrie pour affiner)`;
+  const basis = needs ? `sur la base de <strong>${daily.toLocaleString("fr-FR")} kcal/jour</strong> (biometrie + effort du jour)` : `sur la base de 3 500 kcal/jour (moyenne cycliste — remplissez la biometrie pour affiner)`;
   box.innerHTML = `
     <div class="kcal-total">
       <span class="kcal-big">${total.toLocaleString("fr-FR")}</span>
