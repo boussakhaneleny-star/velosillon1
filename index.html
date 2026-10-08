@@ -468,13 +468,6 @@
     <div id="kcal-box"></div>
   </div>
 
-  <div class="card">
-    <h2>🥗 Équilibre nutritionnel</h2>
-    <p style="font-size:.8rem;color:var(--muted);margin-bottom:10px">
-      Couverture des grandes familles alimentaires dans votre liste (objectif : au moins 1 produit par famille).
-    </p>
-    <div class="bars" id="bars"></div>
-  </div>
 
 </div>
 
@@ -1279,9 +1272,10 @@ function renderSuggestions() {
   } else {
     rest = base.filter(p => !localFirst.includes(p));
   }
+  const isLocal = p => z.local.includes(p);
   let all = [...new Set([...localFirst, ...rest])];
   if (!state.canCook) all = all.filter(p => !NEEDS_COOKING.has(p));
-  all.sort((a, b) => (PRICE[a] || 2) - (PRICE[b] || 2));
+  all.sort((a, b) => (isLocal(b) - isLocal(a)) || ((PRICE[a] || 2) - (PRICE[b] || 2)));
   document.getElementById("suggestions").innerHTML =
     all.length
       ? all.map(p => {
@@ -1391,10 +1385,10 @@ function renderList() {
   ul.querySelectorAll("li").forEach(li => {
     const i = +li.dataset.i;
     li.querySelector(".check").addEventListener("change", e => {
-      state.items[i].done = e.target.checked; save(); renderList(); renderBars();
+      state.items[i].done = e.target.checked; save(); renderList();
     });
     li.querySelector("[data-del]").addEventListener("click", () => {
-      state.items.splice(i, 1); save(); renderList(); renderSuggestions(); renderBars();
+      state.items.splice(i, 1); save(); renderList(); renderSuggestions();
     });
   });
 }
@@ -1463,22 +1457,7 @@ function coverageBlock(totalKcal) {
   <p class="legend">1 journée de besoin : ${needs.kcal.toLocaleString("fr-FR")} kcal, ${needs.protein} g protéines, ${needs.carbs} g glucides, ${needs.fat} g lipides.</p>`;
 }
 
-function renderBars() {
-  const counts = {};
-  for (const it of state.items) {
-    if (it.done) continue;
-    const c = catOf(it.name);
-    if (c) counts[c] = (counts[c] || 0) + it.qty;
-  }
-  document.getElementById("bars").innerHTML = NUTRI_FAMILIES.map(f => {
-    const pct = Math.min(100, Math.round((counts[f.key] || 0) / 4 * 100));
-    const ok = (counts[f.key] || 0) > 0 ? "✓" : "";
-    return `<div>
-      <div class="bar-label">${f.label} ${ok} <span style="color:var(--accent);font-weight:700">${pct}%</span></div>
-      <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
-    </div>`;
-  }).join("");
-}
+function renderBars() {}
 
 // ---------- Actions ----------
 function addItem(name, qty) {
@@ -1487,7 +1466,7 @@ function addItem(name, qty) {
   const ex = state.items.find(it => it.name === name && !it.done);
   if (ex) { ex.qty += add; toast(`${name} — ${fmtQty(ex.qty, u.label)}`); }
   else { state.items.push({ name, qty: add, done: false }); toast(`${name} — ${fmtQty(add, u.label)}`); }
-  save(); renderList(); renderBars();
+  save(); renderList();
 }
 
 function nearestZone(lat, lon) {
@@ -1563,7 +1542,7 @@ document.getElementById("btn-geo").addEventListener("click", () => {
 document.getElementById("btn-reset").addEventListener("click", () => {
   if (!state.items.length) return;
   if (confirm("Vider toute la liste ?")) {
-    state.items = []; save(); renderList(); renderBars();
+    state.items = []; save(); renderList();
   }
 });
 document.getElementById("btn-clear-done").addEventListener("click", () => {
@@ -1576,7 +1555,7 @@ document.getElementById("btn-uncheck-all").addEventListener("click", () => {
 document.getElementById("btn-remove-done").addEventListener("click", () => {
   const n = state.items.filter(it => it.done).length;
   if (!n || !confirm(`Retirer les ${n} article${n > 1 ? "s" : ""} coch${n > 1 ? "és" : "é"} de la liste ?`)) return;
-  state.items = state.items.filter(it => !it.done); save(); renderList(); renderBars(); renderSuggestions();
+  state.items = state.items.filter(it => !it.done); save(); renderList(); renderSuggestions();
 });
 
 function applyTheme() {
@@ -1592,7 +1571,7 @@ document.getElementById("btn-theme").addEventListener("click", () => {
 
 load();
 applyTheme();
-renderZones(); renderTabs(); renderCookToggle(); renderSuggestions(); renderBio(); renderList(); renderBars();
+renderZones(); renderTabs(); renderCookToggle(); renderSuggestions(); renderBio(); renderList();
 </script>
 </body>
 </html>
