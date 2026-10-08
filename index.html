@@ -475,9 +475,9 @@
   </div>
 
   <div class="card">
-    <h2>🥩 Apports en macro-nutriments</h2>
+    <h2>🥩 Apports en micro-nutriments</h2>
     <p style="font-size:.8rem;color:var(--muted);margin-bottom:10px">
-      Répartition des protéines, glucides et lipides dans votre liste (hors articles cochés).
+      Vitamines et minéraux de votre liste (hors articles cochés), comparés aux besoins journaliers d'un cyclotouriste.
     </p>
     <div id="macro-box"></div>
   </div>
@@ -1340,7 +1340,7 @@ function renderList() {
     wChip.style.display = "inline-flex";
     wChip.textContent = `🎒 ≈ ${(totalG / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} kg sur le vélo`;
   } else wChip.style.display = "none";
-  renderKcal(); renderMacros();
+  renderKcal(); renderMicro();
   const warn = document.getElementById("cook-warn");
   if (!state.canCook) {
     const toCook = state.items.filter(it => !it.done && NEEDS_COOKING.has(it.name));
@@ -1445,38 +1445,70 @@ function renderKcal() {
   `;
 }
 
-function renderMacros() {
+// ---------- Micro-nutriments (pour 100 g ou 1 pièce selon unité) : [vitC mg, fer mg, calcium mg, magnésium mg, fibres g] ----------
+const MICRO = {
+  // Fruits (pour 100 g)
+  "Oranges":[50,0.2,40,10,2.4],"Citrons":[45,0.1,26,8,2.8],"Kiwi":[85,0.3,34,17,3],"Fraises":[60,0.4,22,13,2],"Myrtilles":[10,0.2,6,6,2.5],"Myrtilles / baies":[10,0.2,6,6,2.5],"Baies":[10,0.2,6,6,2.5],"Cerises":[10,0.3,13,11,1.3],"Abricots":[10,0.4,13,10,2],"Pommes":[5,0.1,6,5,2.4],"Poires":[4,0.2,11,7,3],"Bananes":[9,0.3,5,27,2.6],"Pastèque":[8,0.2,7,10,0.4],"Melon":[36,0.2,9,12,0.9],"Melon vert":[36,0.2,9,12,0.9],"Raisins":[3,0.2,10,7,0.9],"Raisins / fruits":[3,0.2,10,7,0.9],"Framboises":[25,0.7,25,22,6.5],"Mûres":[21,0.6,29,20,5.3],"Mangues":[45,0.1,10,10,1.6],"Ananas":[48,0.3,13,12,1.4],"Pamplemousse":[34,0.1,22,9,1.1],"Mandarines / clémentines":[30,0.1,33,11,1.8],"Clémentines":[30,0.1,33,11,1.8],"Figues":[2,0.4,35,17,2.9],"Figue / fruits":[2,0.4,35,17,2.9],"Figues / fruits secs":[2,0.4,35,17,2.9],"Dattes":[0,0.9,39,43,6.7],"Compotes (sans sucre ajouté)":[2,0.1,7,4,1.5],"Cassis":[180,1,60,17,4.3],"Fraise / fruits du bois":[60,0.4,22,13,2],"Fruits secs":[3,2.5,80,60,9],"Amandes":[0,3.7,250,270,10],"Amandes / fruits secs":[3,2.5,80,60,9],"Noisettes":[0,4.4,230,160,10],"Noix":[0,2.9,100,160,7],"Châtaignes":[25,0.9,27,33,5],"Prunes":[10,0.2,8,7,1.4],"Quetsches":[10,0.2,8,7,1.4],"Pêches":[7,0.3,6,9,1.5],"Nectarines":[5,0.2,6,9,1.5],"Fruits de la passion":[20,1.2,10,29,10],"Rhubarbe":[8,0.2,86,13,1.8],"Pommes":[5,0.1,6,5,2.4],
+  // Légumes (pour 100 g)
+  "Poivrons":[130,0.4,8,10,2],"Pimientos (poivrons)":[130,0.4,8,10,2],"Piments doux":[120,0.4,8,10,2],"Tomates":[20,0.3,10,9,1],"Tomates cerises":[25,0.3,10,9,1],"Courgettes":[18,0.4,16,18,1],"Aubergines":[3,0.3,9,13,3],"Concombres":[3,0.3,16,13,0.5],"Radis":[15,0.3,25,10,1.6],"Carottes":[6,0.3,30,12,2.8],"Poireaux":[15,1,30,10,1.5],"Oignons":[8,0.2,23,10,1.7],"Oignons de Roscoff":[8,0.2,23,10,1.7],"Oignon rouge":[8,0.2,23,10,1.7],"Échalotes":[8,0.2,34,14,2.5],"Ail":[8,1.2,18,25,2],"Épinards":[50,2.7,100,79,2],"Blettes":[30,1.8,50,23,2],"Salade verte":[10,0.9,30,10,1.5],"Sucrine / batavia":[10,0.9,30,10,1.5],"Mâche / salade":[20,1,30,10,2],"Chou":[40,0.5,45,15,2.5],"Chou rouge":[50,0.7,45,16,2],"Chou kale":[120,1.5,150,47,4],"Chou-fleur":[45,0.4,22,15,2],"Brocoli":[90,0.7,50,21,3],"Chou-rave":[60,0.4,30,20,2],"Navets":[20,0.3,40,11,1.8],"Betteraves":[5,0.8,20,23,2],"Endives":[5,0.5,40,10,3],"Fenouil":[20,0.7,50,17,3],"Céleri":[8,0.3,40,11,1.6],"Artichauts":[10,0.7,45,40,5],"Asperges":[15,0.7,25,14,2],"Haricots verts":[15,1,40,25,3],"Petits pois":[25,1.5,25,33,5],"Fèves / légumes":[25,1.5,25,33,5],"Champignons de Paris":[5,0.5,20,13,2],"Champignons sauvages":[5,2,20,15,2.5],"Courge / potiron":[10,0.6,20,12,1],"Christophine":[10,0.3,20,10,1],"Pousses de soja":[15,0.8,30,20,1.5],"Avocats":[10,0.6,13,29,7],"Basilic":[18,3.2,250,64,1.6],"Cornichons":[10,0.3,40,10,1.5],"Olives":[0,0.4,60,10,3],
+  // Féculents (pour 100 g)
+  "Lentilles":[4,3.3,25,30,8],"Lentilles vertes du Puy":[4,3.3,25,30,8],"Pois chiches":[4,2.9,45,44,7],"Pois chiches / légumineuses":[4,2.9,45,44,7],"Haricots":[2,3,60,50,7],"Haricots tarbais":[2,3,60,50,7],"Choucroute":[15,1.2,40,14,4],"Quinoa":[0,1.9,17,64,7],"Flocons d’avoine":[0,4.7,54,177,10],"Flocons d'avoine":[0,4.7,54,177,10],"Muesli":[0,4,60,130,8],"Muesli (flocons d'avoine)":[0,4,60,130,8],"Pain complet":[0,2.5,60,76,7],"Pain de seigle":[0,2.5,60,76,7],"Pain (brezel)":[0,2,30,30,3],"Pain pita":[0,1.2,30,25,2],"Pain d'épices":[0,2.5,60,40,5],"Son / germe de blé":[0,6,50,150,15],"Riz complet":[0,1.5,15,140,2.5],"Pâtes complètes":[0,1.6,22,44,5],"Farine de sarrasin":[0,3,15,150,10],"Igname":[10,0.5,20,20,4],"Patate douce":[20,0.6,30,30,3],"Pommes de terre":[12,0.3,6,22,2],"Pomme de terre":[12,0.3,6,22,2],"Maïs":[0,1,6,37,2.5],"Maïs (polenta)":[0,1,6,37,2.5],"Maïs (mamaliga)":[0,1,6,37,2.5],"Polenta":[0,1,6,37,2.5],"Semoule":[0,1,15,25,3],"Couscous":[0,1,15,25,3],"Boulgour":[0,1.8,15,70,8],"Tortillas / wraps":[0,1.5,50,25,3],"Gnocchis":[0,1,20,20,2],"Nouilles chinoises":[0,1.2,15,25,2],"Spätzle (pâtes)":[0,1.2,20,25,2],"Châtaignes":[25,0.9,27,33,5],
+  // Protéines (pour 100 g)
+  "Œufs":[0,1.8,50,12,0],"Sardines":[0,2.9,380,39,0],"Sardines / anchois":[0,3,380,39,0],"Maquereau":[0,1.4,12,76,0],"Hareng / maquereau":[0,1.4,12,76,0],"Hareng / poisson gras":[0,1.4,12,76,0],"Thon en conserve":[0,1.3,12,27,0],"Poisson frais":[0,0.8,20,30,0],"Poisson fumé":[0,1,20,30,0],"Cabillaud":[0,0.3,16,32,0],"Cabillaud / poisson frais":[0,0.3,16,32,0],"Cabillaud / poisson":[0,0.3,16,32,0],"Saumon":[0,0.5,15,30,0],"Saumon / poisson gras":[0,0.5,15,30,0],"Saumon fumé":[0,0.5,15,30,0],"Truite":[0,0.3,20,28,0],"Filet de truite":[0,0.3,20,28,0],"Poulpe":[0,1,50,30,0],"Poulpe / poisson frais":[0,1,50,30,0],"Merlu":[0,0.3,15,25,0],"Poisson de lac":[0,0.5,20,28,0],"Poisson de rivière":[0,0.5,20,28,0],"Sandre (poisson de rivière)":[0,0.5,20,28,0],"Filet de perche (poisson)":[0,0.5,20,28,0],"Crevettes grises":[0,2,70,30,0],"Moules":[8,6,26,32,0],"Huîtres":[0,5.7,60,20,0],"Anchois":[0,4.3,232,69,0],"Poulet":[0,0.7,12,25,0],"Poulet fermier":[0,0.7,12,25,0],"Poulet de Bresse":[0,0.7,12,25,0],"Dinde":[0,0.8,15,25,0],"Escalope de veau":[0,0.9,15,22,0],"Agneau":[0,2,15,25,0],"Viande de renne":[0,3,10,25,0],"Renne / viande":[0,3,10,25,0],"Confit de canard":[0,2,10,15,0],"Tofu":[0,5.4,350,58,2],"Steak de soja":[0,5,150,50,3],"Jambon blanc":[0,0.9,7,15,0],"Jambon d'Auvergne":[0,1.2,20,20,0],"Jambon serrano":[0,1.2,20,20,0],"Jambon fumé":[0,1.2,20,20,0],"Jambon de montagne":[0,1.2,20,20,0],"Jambon (prosciutto)":[0,1.2,20,20,0],"Saucisse sèche":[0,1,15,18,0],"Saucisson":[0,1,15,18,0],"Chorizo":[0,1.5,15,20,0],"Pâté / terrine":[0,1.5,15,15,0],"Lardons":[0,0.8,15,15,0],"Lard fumé":[0,0.8,15,15,0],"Bœuf séché":[0,2,10,20,0],"Figatellu (charcuterie)":[0,1,15,18,0],"Escargots / gastéropodes":[0,3.5,105,76,0],"Poulpe":[0,1,50,30,0],
+  // Produits laitiers (pour 100 g)
+  "Lait":[2,0.1,120,10,0],"Lait demi-écrémé":[2,0.1,120,10,0],"Lait ribot":[2,0.1,120,10,0],"Yaourt":[1,0.1,150,12,0],"Yaourt aux fruits":[8,0.1,140,12,0],"Yaourt grec":[1,0.1,110,11,0],"Skyr":[1,0.1,130,11,0],"Yaourt (skyr)":[1,0.1,130,11,0],"Fromage blanc (quark)":[1,0.1,100,10,0],"Fromage frais (faisselle)":[1,0.1,90,9,0],"Fromage à tartiner":[0,0.1,100,10,0],"Camembert":[0,0.2,500,20,0],"Saint-Nectaire":[0,0.2,700,25,0],"Beaufort":[0,0.3,900,30,0],"Munster":[0,0.2,700,25,0],"Chèvre":[0,0.2,150,15,0],"Fromage de brebis (Ossau)":[0,0.3,800,30,0],"Fromage de brebis":[0,0.3,700,28,0],"Fromage manchego":[0,0.5,800,30,0],"Manchego (fromage de brebis)":[0,0.5,800,30,0],"Fromage de brebis (Idiazábal)":[0,0.5,800,30,0],"Gorgonzola / fromages":[0,0.3,500,20,0],"Fromage de brebis (pecorino)":[0,0.4,800,30,0],"Fromage (Gouda)":[0,0.2,700,25,0],"Fromage (Herve)":[0,0.2,600,20,0],"Fromage":[0,0.2,700,25,0],"Fromage de chèvre":[0,0.2,150,15,0],"Fromage (Cheddar)":[0,0.3,700,25,0],"Fromage (cheddar)":[0,0.3,700,25,0],"Fromage (Caerphilly)":[0,0.3,600,20,0],"Fromage (brunost)":[0,0.2,500,40,0],"Fromage (oscypek)":[0,0.4,700,25,0],"Fromage de brebis (bryndza)":[0,0.4,500,20,0],"Fromage blanc (sirene)":[0,0.2,300,15,0],"Fromage de brebis (gbejniet)":[0,0.2,300,15,0],"Comté":[0,0.3,900,35,0],"Gruyère / fromage":[0,0.3,900,30,0],"Emmental / fromage d'alpage":[0,0.3,900,30,0],"Fromage de montagne":[0,0.3,800,30,0],"Mozzarella":[0,0.2,500,20,0],"Feta (fromage)":[0,0.2,360,20,0],"Ricotta":[0,0.3,240,15,0],"Brocciu":[0,0.2,300,15,0],"Halloumi (fromage)":[0,0.3,600,20,0],"Parmesan":[0,0.4,1100,35,0],"Cheddar / fromage":[0,0.3,700,25,0],"Beurre":[0,0,20,2,0],"Beurre demi-sel":[0,0,20,2,0],"Crème fraîche":[1,0.1,100,10,0],
+  // Matières grasses (pour 100 g)
+  "Huile d'olive":[0,0.4,1,1,0],"Huile de colza":[0,0.2,1,1,0],"Huile de tournesol":[0,0.2,1,1,0],"Miel":[0,0.1,5,3,0],"Miels de montagne":[0,0.1,5,3,0],"Miel de montagne":[0,0.1,5,3,0],"Beurre de cacahuète":[0,1.9,43,154,6],"Sésame / tahini":[0,4.6,425,95,9],"Graines de chia":[0,7.7,631,335,34],"Chocolat noir (>70%)":[0,11.9,73,228,11],"Confiture / marmelade":[2,0.2,20,7,1],"Aïoli / mayonnaise":[0,0.2,20,3,0],"Tapenade":[0,0.6,60,20,3],"Pesto":[2,1.2,180,40,2],"Moutarde":[0,1.5,63,48,3],"Paprika (épices)":[0,1.4,36,19,0],"Safran / épices":[0,3,60,65,0],
+};
+const MICRO_FALLBACK = { "Féculents":[0,1.5,20,40,4], "Protéines":[0,1,30,25,0], "Légumes":[20,0.5,30,15,2], "Fruits":[20,0.2,20,10,2], "Produits laitiers":[0,0.1,100,10,0], "Matières grasses":[0,0.5,50,20,2], "Boissons":[0,0,10,5,0] };
+const MICRO_NEEDS = [ [110, "Vitamine C"], [14, "Fer"], [950, "Calcium"], [400, "Magnésium"], [30, "Fibres"] ];
+
+function microOf(name) {
+  if (MICRO[name]) return MICRO[name];
+  const cat = catOf(name);
+  return MICRO_FALLBACK[cat] || [0,0,0,0,0];
+}
+
+function estimateMicro() {
+  const t = [0, 0, 0, 0, 0];
+  for (const it of state.items) {
+    if (it.done) continue;
+    const u = unitOf(it.name);
+    const w = weightOf(it.name);
+    const factor = u.label === "g" ? it.qty / 100
+      : ((w || 100) * (u.label === "kg" ? 10 : u.label === "L" ? 10 : 1)) * it.qty / 100;
+    const m = microOf(it.name);
+    for (let i = 0; i < 5; i++) t[i] += m[i] * factor;
+  }
+  return t;
+}
+
+function renderMicro() {
   const box = document.getElementById("macro-box");
-  const m = estimateMacros();
   const active = state.items.filter(it => !it.done).length;
   if (!active) {
-    box.innerHTML = '<p class="empty">Ajoutez des articles pour voir vos apports en protéines, glucides et lipides.</p>';
+    box.innerHTML = '<p class="empty">Ajoutez des articles pour voir vos apports en vitamines et minéraux.</p>';
     return;
   }
-  const kc = { p: m.p * 4, c: m.c * 4, f: m.f * 9 };
-  const totalKc = kc.p + kc.c + kc.f;
+  const t = estimateMicro();
   const rows = [
-    { key: "p", label: "🥩 Protéines", color: "#c05621", role: "récupération musculaire" },
-    { key: "c", label: "🍞 Glucides", color: "#b7791f", role: "énergie immédiate" },
-    { key: "f", label: "🧆 Lipides", color: "#6b46c1", role: "énergie de réserve" },
+    { label: "🥊 Vitamine C", unit: "mg", color: "#d69e2e", role: "immunité, anti-fatigue" },
+    { label: "⚑️ Fer", unit: "mg", color: "#c05621", role: "oxygénation du sang" },
+    { label: "🦵 Calcium", unit: "mg", color: "#2b6cb0", role: "os, contractions musculaires" },
+    { label: "⚡ Magnésium", unit: "mg", color: "#6b46c1", role: "crampes, récupération" },
+    { label: "🍋 Fibres", unit: "g", color: "#2f7d4f", role: "digestion, satiété" },
   ];
-  const needs = bioNeeds();
-  box.innerHTML = rows.map(r => {
-    const g = Math.round(m[r.key]);
-    const pctKc = totalKc > 0 ? Math.round(kc[r.key] / totalKc * 100) : 0;
-    const kcalFrom = Math.round(kc[r.key]);
-    let cmp = "";
-    if (needs) {
-      const need = r.key === "p" ? needs.protein : r.key === "c" ? needs.carbs : needs.fat;
-      const pctNeed = Math.round(g / need * 100);
-      cmp = ' <span class="macro-sub">· ' + pctNeed + ' % du besoin journalier (' + need + ' g)</span>';
-    }
+  box.innerHTML = rows.map((r, i) => {
+    const need = MICRO_NEEDS[i][0];
+    const val = t[i];
+    const pct = Math.round(val / need * 100);
+    const color = pct >= 100 ? "#2f7d4f" : pct >= 50 ? "#d69e2e" : "#c05621";
     return '<div class="macro-row">' +
       '<div class="macro-head"><span class="macro-name">' + r.label + ' <span class="macro-sub">— ' + r.role + '</span></span>' +
-      '<span><span class="macro-val">' + g.toLocaleString("fr-FR") + ' g</span> <span class="macro-kcal">(' + pctKc + ' % · ' + kcalFrom.toLocaleString("fr-FR") + ' kcal)</span>' + cmp + '</span></div>' +
-      '<div class="kcal-cat-bar"><span class="kcal-cat-fill" style="width:' + Math.min(100, pctKc) + '%;background:' + r.color + '"></span></div>' +
+      '<span><span class="macro-val">' + (val < 10 ? Math.round(val * 10) / 10 : Math.round(val)).toLocaleString("fr-FR") + ' ' + r.unit + '</span> <span class="macro-kcal">' + pct + ' % du besoin (' + need + ' ' + r.unit + ')</span></span></div>' +
+      '<div class="kcal-cat-bar"><span class="kcal-cat-fill" style="width:' + Math.min(100, pct) + '%;background:' + color + '"></span></div>' +
     '</div>';
-  }).join("") + (needs ? '<p class="legend">Référence cyclotourisme : ~55 % glucides, ~15 % protéines, ~25 % lipides. Sur 1 jour de besoin : ' + needs.protein + ' g protéines, ' + needs.carbs + ' g glucides, ' + needs.fat + ' g lipides.</p>' : "");
+  }).join("") + '<p class="legend">Besoins indicatifs pour 1 jour de cyclotourisme. Sources variées = micro-nutriments variés : variez les familles d\'aliments.</p>';
 }
 function coverageBlock(totalKcal) {
   const needs = bioNeeds();
