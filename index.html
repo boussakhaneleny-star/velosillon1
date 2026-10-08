@@ -40,8 +40,14 @@
     box-shadow: 0 6px 20px rgba(30, 95, 58, .35);
     border-radius: 0 0 24px 24px;
   }
-  header h1 { font-size: 1.35rem; letter-spacing: .3px; }
-  header p { font-size: .8rem; opacity: .92; margin-top: 2px; }
+  header { transition: padding .25s ease; }
+  header h1 { font-size: 1.35rem; letter-spacing: .3px; transition: font-size .25s ease; white-space: nowrap; }
+  header p { font-size: .8rem; opacity: .92; margin-top: 2px; transition: opacity .2s ease, font-size .25s ease, margin .25s ease; }
+  header .badge { transition: all .2s ease; }
+  header.compact { padding: 10px 20px 12px; }
+  header.compact h1 { font-size: .95rem; }
+  header.compact p { font-size: .68rem; opacity: 0; margin-top: 0; height: 0; overflow: hidden; }
+  header.compact .badge { font-size: .6rem; padding: 1px 8px; margin-top: 2px; }
   header .badge {
     display: inline-block; margin-top: 6px;
     background: rgba(255,255,255,.18);
@@ -1682,6 +1688,16 @@ document.getElementById("cook-no").addEventListener("click", () => {
   });
   el.addEventListener("change", () => { if (save()) toast("💾 Journée enregistrée"); renderRide(); renderKcal(); });
 });
+// ---------- En-tête compact au défilement ----------
+const headerEl = document.querySelector("header");
+let lastScrollY = 0;
+function onScroll() {
+  const y = window.scrollY || document.documentElement.scrollTop;
+  if (y > 40) headerEl.classList.add("compact");
+  else headerEl.classList.remove("compact");
+  lastScrollY = y;
+}
+window.addEventListener("scroll", onScroll, { passive: true });
 document.getElementById("sugg-search").addEventListener("input", renderSuggestions);
 document.getElementById("new-item").addEventListener("keydown", e => {
   if (e.key === "Enter") document.getElementById("btn-add").click();
