@@ -364,7 +364,7 @@
     <h2>🛒 Ma liste de courses <span id="item-count" style="font-size:.75rem;color:var(--muted);font-weight:400"></span></h2>
     <div class="row" style="margin-top:0">
       <input type="text" id="new-item" placeholder="Ajouter un produit…" style="flex:2">
-      <input type="number" id="new-qty" placeholder="Qté" min="1" style="flex:1">
+      <input type="number" id="new-qty" placeholder="Qté" min="0.1" step="0.5" style="flex:1">
       <button id="btn-add">➕</button>
     </div>
     <ul class="list" id="list"></ul>
@@ -648,7 +648,7 @@ function catStyle(name) {
   return `--cat-color:${s.color};--cat-bg:${s.bg};`;
 }
 
-// ---------- Estimation calorique (kcal par portion ≈ 100-150g) ----------
+// ---------- Estimation calorique (kcal par unité de vente : pièce, 100 g, 1 L…) ----------
 const KCAL = {
   "Pâtes complètes":350,"Riz":300,"Riz complet":320,"Pain complet":550,"Pain de seigle":500,"Pommes de terre":260,"Couscous":340,"Boulgour":340,"Quinoa":360,"Lentilles":380,"Lentilles vertes du Puy":380,"Pois chiches":360,"Haricots":340,"Haricots verts":35,"Haricots tarbais":340,"Choucroute":90,"Flocons d'avoine":380,"Muesli":400,"Igname":280,"Patate douce":260,"Maïs":330,"Polenta":350,"Tortillas / wraps":290,"Crackers / biscuits salés":450,"Pain pita":275,"Gnocchis":300,"Nouilles chinoises":350,"Farine de sarrasin":340,"Barres de céréales":150,"Pain d'épices":320,"Semoule":340,"Châtaignes":350,
   "Sardines":200,"Maquereau":230,"Thon en conserve":150,"Poulet fermier":250,"Poulet":240,"Œufs":140,"Jambon blanc":150,"Jambon d'Auvergne":200,"Confit de canard":450,"Poisson frais":180,"Crevettes grises":110,"Escalope de veau":190,"Anchois":120,"Tofu":120,"Fruits secs":400,"Noix":650,"Amandes":650,"Haricots tarbais":340,"Dinde":220,"Saucisse sèche":400,"Saucisson":450,"Pâté / terrine":350,"Lardons":400,"Lard fumé":450,"Cabillaud":150,"Saumon":280,"Truite":190,"Pois chiches":360,"Steak de soja":180,"Jambon serrano":200,"Agneau":350,"Fromage blanc (quark)":120,"Skyr":110,"Bœuf séché":400,"Viande de renne":250,"Renne / viande":250,"Filet de truite":190,"Poulpe":140,"Merlu":150,"Poisson de lac":170,"Poisson de rivière":170,"Sandre (poisson de rivière)":170,"Filet de perche (poisson)":160,"Poisson fumé":180,
@@ -699,7 +699,8 @@ function estimateKcal() {
   const byCat = {};
   for (const it of state.items) {
     if (it.done) continue;
-    const k = (KCAL[it.name] !== undefined ? KCAL[it.name] : 150) * it.qty;
+    const u = unitOf(it.name);
+    const k = (KCAL[it.name] !== undefined ? KCAL[it.name] : 150) * u.kf * it.qty;
     total += k;
     const c = catOf(it.name) || "Autres";
     byCat[c] = (byCat[c] || 0) + k;
@@ -722,12 +723,13 @@ function estimateMacros() {
   const m = { kcal: 0, p: 0, c: 0, f: 0 };
   for (const it of state.items) {
     if (it.done) continue;
+    const u = unitOf(it.name);
     const k = KCAL[it.name] !== undefined ? KCAL[it.name] : 150;
     const mac = MACRO[it.name] || [15, 15, 5];
-    m.kcal += k * it.qty;
-    m.p += mac[0] * it.qty;
-    m.c += mac[1] * it.qty;
-    m.f += mac[2] * it.qty;
+    m.kcal += k * u.kf * it.qty;
+    m.p += mac[0] * u.kf * it.qty;
+    m.c += mac[1] * u.kf * it.qty;
+    m.f += mac[2] * u.kf * it.qty;
   }
   return m;
 }
@@ -742,12 +744,26 @@ const NUTRI_FAMILIES = [
 ];
 
 // ---------- État ----------
-const LS_KEY = "velosillon.v1";
+const LS_KEY = "velosillon.v2";
+const LS_KEY_V1 = "velosillon.v1";
 let state = { country: "France", region: "Bretagne", activeCat: "Féculents", canCook: true, bio: { sex: "h", age: null, weight: null, height: null }, items: [] };
 
 function load() {
   try {
-    const raw = localStorage.getItem(LS_KEY);
+    let raw = localStorage.getItem(LS_KEY);
+    if (!raw) {
+      const old = localStorage.getItem(LS_KEY_V1);
+      if (old) {
+        const s = JSON.parse(old);
+        state = Object.assign(state, s);
+        state.items = (state.items || []).map(it => {
+          const u = unitOf(it.name);
+          const isSimplePiece = u.label === "pièce" && u.def === 1;
+          return { name: it.name, qty: isSimplePiece ? it.qty : it.qty * u.def, done: it.done };
+        });
+        raw = null;
+      }
+    }
     if (raw) {
       const s = JSON.parse(raw);
       state = Object.assign(state, s);
@@ -790,6 +806,113 @@ function catOf(name) {
   for (const [cat, prods] of Object.entries(CATEGORIES))
     if (prods.includes(name)) return cat;
   return null;
+}
+
+// ---------- Unités de vente et quantités par défaut ----------
+// def : quantité ajoutée par clic ; kf : facteur kcal (1 = par pièce, 0.01 = par 100 g, 10 = par kg, 5 = par litre)
+const UNITS = {
+  "Œufs": { label: "pièce", def: 6, kf: 1 },
+  "Pommes de terre": { label: "kg", def: 1, kf: 10 },
+  "Patate douce": { label: "kg", def: 1, kf: 10 },
+  "Igname": { label: "kg", def: 1, kf: 10 },
+  "Pain complet": { label: "pièce", def: 1, kf: 1 },
+  "Pain de seigle": { label: "pièce", def: 1, kf: 1 },
+  "Pain pita": { label: "pièce", def: 1, kf: 1 },
+  "Pain (brezel)": { label: "pièce", def: 1, kf: 1 },
+  "Tortillas / wraps": { label: "paquet", def: 1, kf: 1 },
+  "Crackers / biscuits salés": { label: "paquet", def: 1, kf: 1 },
+  "Gnocchis": { label: "paquet", def: 1, kf: 1 },
+  "Barres de céréales": { label: "pièce", def: 1, kf: 1 },
+  "Petits pois": { label: "g", def: 300, kf: 0.01 },
+  "Haricots verts": { label: "kg", def: 0.5, kf: 10 },
+  "Épinards": { label: "g", def: 300, kf: 0.01 },
+  "Champignons de Paris": { label: "g", def: 300, kf: 0.01 },
+  "Thon en conserve": { label: "boîte", def: 1, kf: 1 },
+  "Sardines": { label: "boîte", def: 1, kf: 1 },
+  "Maquereau": { label: "boîte", def: 1, kf: 1 },
+  "Poisson frais": { label: "g", def: 300, kf: 0.01 },
+  "Cabillaud": { label: "g", def: 300, kf: 0.01 },
+  "Saumon": { label: "g", def: 300, kf: 0.01 },
+  "Saumon / poisson gras": { label: "g", def: 300, kf: 0.01 },
+  "Truite": { label: "g", def: 300, kf: 0.01 },
+  "Filet de truite": { label: "g", def: 300, kf: 0.01 },
+  "Poulpe": { label: "g", def: 300, kf: 0.01 },
+  "Merlu": { label: "g", def: 300, kf: 0.01 },
+  "Poisson de lac": { label: "g", def: 300, kf: 0.01 },
+  "Poisson de rivière": { label: "g", def: 300, kf: 0.01 },
+  "Sandre (poisson de rivière)": { label: "g", def: 300, kf: 0.01 },
+  "Filet de perche (poisson)": { label: "g", def: 300, kf: 0.01 },
+  "Poisson fumé": { label: "g", def: 200, kf: 0.01 },
+  "Crevettes grises": { label: "g", def: 200, kf: 0.01 },
+  "Anchois": { label: "g", def: 100, kf: 0.01 },
+  "Poulet": { label: "g", def: 300, kf: 0.01 },
+  "Poulet fermier": { label: "g", def: 300, kf: 0.01 },
+  "Dinde": { label: "g", def: 300, kf: 0.01 },
+  "Escalope de veau": { label: "g", def: 200, kf: 0.01 },
+  "Agneau": { label: "g", def: 300, kf: 0.01 },
+  "Confit de canard": { label: "g", def: 200, kf: 0.01 },
+  "Tofu": { label: "g", def: 200, kf: 0.01 },
+  "Steak de soja": { label: "g", def: 200, kf: 0.01 },
+  "Viande de renne": { label: "g", def: 300, kf: 0.01 },
+  "Renne / viande": { label: "g", def: 300, kf: 0.01 },
+  "Jambon blanc": { label: "g", def: 100, kf: 0.01 },
+  "Jambon d'Auvergne": { label: "g", def: 100, kf: 0.01 },
+  "Jambon serrano": { label: "g", def: 100, kf: 0.01 },
+  "Saucisse sèche": { label: "g", def: 100, kf: 0.01 },
+  "Saucisson": { label: "g", def: 100, kf: 0.01 },
+  "Pâté / terrine": { label: "g", def: 100, kf: 0.01 },
+  "Lardons": { label: "g", def: 100, kf: 0.01 },
+  "Lard fumé": { label: "g", def: 100, kf: 0.01 },
+  "Bœuf séché": { label: "g", def: 100, kf: 0.01 },
+  "Figatellu (charcuterie)": { label: "g", def: 100, kf: 0.01 },
+  "Camembert": { label: "pièce", def: 1, kf: 1 },
+  "Munster": { label: "pièce", def: 1, kf: 1 },
+  "Chèvre": { label: "pièce", def: 1, kf: 1 },
+  "Mozzarella": { label: "pièce", def: 1, kf: 1 },
+  "Brocciu": { label: "pièce", def: 1, kf: 1 },
+  "Lait": { label: "L", def: 1, kf: 5 },
+  "Lait demi-écrémé": { label: "L", def: 1, kf: 5 },
+  "Lait ribot": { label: "L", def: 1, kf: 5 },
+  "Yaourt": { label: "pièce", def: 4, kf: 1 },
+  "Yaourt aux fruits": { label: "pièce", def: 4, kf: 1 },
+  "Yaourt grec": { label: "pièce", def: 4, kf: 1 },
+  "Skyr": { label: "pièce", def: 4, kf: 1 },
+  "Beurre": { label: "g", def: 250, kf: 0.01 },
+  "Beurre demi-sel": { label: "g", def: 250, kf: 0.01 },
+  "Huile d'olive": { label: "L", def: 0.5, kf: 10 },
+  "Huile de colza": { label: "L", def: 0.5, kf: 10 },
+  "Huile de tournesol": { label: "L", def: 0.5, kf: 10 },
+  "Miel": { label: "g", def: 500, kf: 0.01 },
+  "Miels de montagne": { label: "g", def: 500, kf: 0.01 },
+  "Miel de montagne": { label: "g", def: 500, kf: 0.01 },
+  "Confiture / marmelade": { label: "g", def: 500, kf: 0.01 },
+  "Chocolat noir (>70%)": { label: "g", def: 100, kf: 0.01 },
+  "Figues / fruits secs": { label: "g", def: 200, kf: 0.01 },
+  "Eau en grande quantité": { label: "L", def: 6, kf: 0 },
+  "Eau pétillante": { label: "L", def: 2, kf: 0 },
+  "Café": { label: "paquet", def: 1, kf: 1 },
+  "Thé / tisane": { label: "paquet", def: 1, kf: 1 },
+  "Chocolat chaud (poudre)": { label: "paquet", def: 1, kf: 1 },
+  "Sirop (dilué, modération)": { label: "bouteille", def: 1, kf: 15 },
+  "Cidre (modération)": { label: "pièce", def: 1, kf: 1 },
+  "Bière (modération)": { label: "pièce", def: 1, kf: 1 },
+  "Bières (modération)": { label: "pièce", def: 1, kf: 1 },
+};
+
+function unitOf(name) {
+  if (UNITS[name]) return UNITS[name];
+  const cat = catOf(name);
+  if (cat === "Féculents" || cat === "Protéines" || cat === "Produits laitiers" || cat === "Matières grasses")
+    return { label: "g", def: 200, kf: 0.01 };
+  if (cat === "Boissons") return { label: "L", def: 1, kf: 5 };
+  return { label: "pièce", def: 1, kf: 1 };
+}
+
+const UNIT_PLURALS = { "pièce": "pièces", "boîte": "boîtes", "pot": "pots", "paquet": "paquets", "bouteille": "bouteilles", "tablette": "tablettes", "plaquette": "plaquettes" };
+function fmtQty(qty, label) {
+  const q = String(Math.round(qty * 100) / 100).replace(".", ",");
+  if (UNIT_PLURALS[label]) return `${q} ${qty > 1 ? UNIT_PLURALS[label] : label}`;
+  return `${q} ${label}`;
 }
 
 // ---------- Rendu ----------
@@ -836,7 +959,8 @@ function renderSuggestions() {
           const pr = PRICE[p] || 2;
           const euro = "€".repeat(pr) + "\u00A0".repeat(3 - pr);
           const isLocal = z.local.includes(p);
-          return `<span class="sugg ${isLocal ? "local" : ""}" data-name="${p}" style="${catStyle(p)}" title="${isLocal ? "Spécialité locale — " : ""}Indice de prix : ${"€".repeat(pr)}">${isLocal ? "⭐ " : ""}${p}<span class="price">${euro}</span></span>`;
+          const u = unitOf(p);
+          return `<span class="sugg ${isLocal ? "local" : ""}" data-name="${p}" style="${catStyle(p)}" title="${isLocal ? "Spécialité locale — " : ""}Indice de prix : ${"€".repeat(pr)} — Quantité par défaut : ${fmtQty(u.def, u.label)}">${isLocal ? "⭐ " : ""}${p}<span class="price">${euro}${fmtQty(u.def, u.label)}</span></span>`;
         }).join("")
       : `<span class="empty">Aucun produit trouvé pour « ${filter} »${!state.canCook ? " — essayez d'activer la cuisson ou changez de catégorie" : ""}</span>`;
   document.querySelectorAll(".sugg").forEach(el =>
@@ -883,7 +1007,7 @@ function renderList() {
       `<li class="${it.done ? "done" : ""}" data-i="${i}" style="${catStyle(it.name)}">
       <input type="checkbox" class="check" ${it.done ? "checked" : ""}>
       <span class="name">${it.name}</span>
-      <span class="qty">×${it.qty}</span>
+      <span class="qty">${fmtQty(it.qty, unitOf(it.name).label)}</span>
       <button class="small del" data-del="${i}">🗑</button>
     </li>`).join("");
   }
@@ -893,7 +1017,7 @@ function renderList() {
       `<li class="${it.done ? "done" : ""}" data-i="${i}">
       <input type="checkbox" class="check" ${it.done ? "checked" : ""}>
       <span class="name">${it.name}</span>
-      <span class="qty">×${it.qty}</span>
+      <span class="qty">${fmtQty(it.qty, unitOf(it.name).label)}</span>
       <button class="small del" data-del="${i}">🗑</button>
     </li>`).join("");
   }
@@ -990,10 +1114,12 @@ function renderBars() {
 }
 
 // ---------- Actions ----------
-function addItem(name, qty = 1) {
+function addItem(name, qty) {
+  const u = unitOf(name);
+  const add = (typeof qty === "number" && !isNaN(qty) && qty > 0) ? qty : u.def;
   const ex = state.items.find(it => it.name === name && !it.done);
-  if (ex) { ex.qty += qty; toast(`+1 ${name}`); }
-  else { state.items.push({ name, qty, done: false }); toast(`${name} ajouté`); }
+  if (ex) { ex.qty += add; toast(`${name} — ${fmtQty(ex.qty, u.label)}`); }
+  else { state.items.push({ name, qty: add, done: false }); toast(`${name} — ${fmtQty(add, u.label)}`); }
   save(); renderList(); renderBars();
 }
 
@@ -1022,7 +1148,8 @@ document.getElementById("btn-add").addEventListener("click", () => {
   const q = document.getElementById("new-qty");
   const name = inp.value.trim();
   if (!name) return;
-  addItem(name, Math.max(1, parseInt(q.value || "1", 10)));
+  const qv = parseFloat(String(q.value).replace(",", "."));
+  addItem(name, qv > 0 ? qv : undefined);
   inp.value = ""; q.value = "";
 });
 function renderCookToggle() {
