@@ -280,6 +280,7 @@
   }
   .cover-label { width: 80px; flex-shrink: 0; font-weight: 600; }
   .cover-val { width: 78px; text-align: right; flex-shrink: 0; font-size: .75rem; }
+  .cover-nums { width: 130px; text-align: right; flex-shrink: 0; font-size: .72rem; color: var(--muted); white-space: nowrap; }
   .cover-scale {
     position: relative;
     background:
@@ -1090,6 +1091,7 @@ function coverageBlock(totalKcal) {
       <span class="cover-label">${r.label}</span>
       <span class="kcal-cat-bar cover-scale"><span class="kcal-cat-fill" style="width:${barPct.toFixed(0)}%;background:${color}"></span></span>
       <span class="cover-val" style="color:${color};font-weight:700">${icon} ${p} %</span>
+      <span class="cover-nums">${Math.round(r.val).toLocaleString("fr-FR")} / ${r.need.toLocaleString("fr-FR")} ${r.unit}</span>
     </div>`;
   }).join("");
   return `<h3 class="cover-title">🎯 Couverture des besoins quotidiens</h3>${html}
