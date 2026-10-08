@@ -43,12 +43,15 @@
   header h1 { font-size: 1.35rem; letter-spacing: .3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 52px; }
   header p { font-size: .8rem; opacity: .92; margin-top: 2px; }
   header .badge { display: inline-block; }
-  header .badge, header p, header h1 { transition: none; }
-  header { transition: padding .2s ease; }
+  header p, header .badge {
+    transition: opacity .18s ease, margin .18s ease, padding .18s ease, max-height .18s ease, transform .18s ease;
+    max-height: 40px; overflow: hidden;
+  }
+  header { transition: padding .18s ease; }
   header.compact { padding: 10px 20px 12px; }
   header.compact h1 { font-size: 1.35rem; }
-  header.compact p { display: none; }
-  header.compact .badge { display: none; }
+  header.compact p { opacity: 0; margin-top: 0; max-height: 0; }
+  header.compact .badge { opacity: 0; margin-top: 0; padding-top: 0; padding-bottom: 0; max-height: 0; border-width: 0; }
   header.compact #btn-theme { top: 50%; transform: translateY(-50%); }
   header .badge {
     display: inline-block; margin-top: 6px;
