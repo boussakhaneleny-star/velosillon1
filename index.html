@@ -224,6 +224,12 @@
     cursor: pointer;
   }
   #kcal-box { font-size: .85rem; }
+  #macro-box { font-size: .85rem; }
+  .macro-row { margin-bottom: 12px; }
+  .macro-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 4px; margin-bottom: 4px; }
+  .macro-name { font-weight: 700; }
+  .macro-val { font-weight: 800; color: var(--accent); }
+  .macro-sub { font-size: .72rem; color: var(--muted); }
   .bio-grid {
     display: grid; grid-template-columns: 1fr 1fr;
     gap: 10px;
@@ -466,6 +472,14 @@
   <div class="card">
     <h2>🔥 Estimation calorique</h2>
     <div id="kcal-box"></div>
+  </div>
+
+  <div class="card">
+    <h2>🥩 Apports en macro-nutriments</h2>
+    <p style="font-size:.8rem;color:var(--muted);margin-bottom:10px">
+      Répartition des protéines, glucides et lipides dans votre liste (hors articles cochés).
+    </p>
+    <div id="macro-box"></div>
   </div>
 
 
@@ -1326,7 +1340,7 @@ function renderList() {
     wChip.style.display = "inline-flex";
     wChip.textContent = `🎒 ≈ ${(totalG / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} kg sur le vélo`;
   } else wChip.style.display = "none";
-  renderKcal();
+  renderKcal(); renderMacros();
   const warn = document.getElementById("cook-warn");
   if (!state.canCook) {
     const toCook = state.items.filter(it => !it.done && NEEDS_COOKING.has(it.name));
@@ -1431,6 +1445,39 @@ function renderKcal() {
   `;
 }
 
+function renderMacros() {
+  const box = document.getElementById("macro-box");
+  const m = estimateMacros();
+  const active = state.items.filter(it => !it.done).length;
+  if (!active) {
+    box.innerHTML = '<p class="empty">Ajoutez des articles pour voir vos apports en protéines, glucides et lipides.</p>';
+    return;
+  }
+  const kc = { p: m.p * 4, c: m.c * 4, f: m.f * 9 };
+  const totalKc = kc.p + kc.c + kc.f;
+  const rows = [
+    { key: "p", label: "🥩 Protéines", color: "#c05621", role: "récupération musculaire" },
+    { key: "c", label: "🍞 Glucides", color: "#b7791f", role: "énergie immédiate" },
+    { key: "f", label: "🧆 Lipides", color: "#6b46c1", role: "énergie de réserve" },
+  ];
+  const needs = bioNeeds();
+  box.innerHTML = rows.map(r => {
+    const g = Math.round(m[r.key]);
+    const pctKc = totalKc > 0 ? Math.round(kc[r.key] / totalKc * 100) : 0;
+    const kcalFrom = Math.round(kc[r.key]);
+    let cmp = "";
+    if (needs) {
+      const need = r.key === "p" ? needs.protein : r.key === "c" ? needs.carbs : needs.fat;
+      const pctNeed = Math.round(g / need * 100);
+      cmp = ' <span class="macro-sub">· ' + pctNeed + ' % du besoin journalier (' + need + ' g)</span>';
+    }
+    return '<div class="macro-row">' +
+      '<div class="macro-head"><span class="macro-name">' + r.label + ' <span class="macro-sub">— ' + r.role + '</span></span>' +
+      '<span><span class="macro-val">' + g.toLocaleString("fr-FR") + ' g</span> <span class="macro-kcal">(' + pctKc + ' % · ' + kcalFrom.toLocaleString("fr-FR") + ' kcal)</span>' + cmp + '</span></div>' +
+      '<div class="kcal-cat-bar"><span class="kcal-cat-fill" style="width:' + Math.min(100, pctKc) + '%;background:' + r.color + '"></span></div>' +
+    '</div>';
+  }).join("") + (needs ? '<p class="legend">Référence cyclotourisme : ~55 % glucides, ~15 % protéines, ~25 % lipides. Sur 1 jour de besoin : ' + needs.protein + ' g protéines, ' + needs.carbs + ' g glucides, ' + needs.fat + ' g lipides.</p>' : "");
+}
 function coverageBlock(totalKcal) {
   const needs = bioNeeds();
   const m = estimateMacros();
