@@ -33,7 +33,7 @@
     position: relative;
     background: linear-gradient(135deg, #1e5f3a 0%, #2f7d4f 55%, #4c9d63 100%);
     color: #fff;
-    padding: 22px 20px 26px;
+    padding: 14px 20px 16px;
     position: sticky;
     top: 0;
     z-index: 10;
@@ -43,24 +43,6 @@
   header h1 { font-size: 1.35rem; letter-spacing: .3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 52px; }
   header p { font-size: .8rem; opacity: .92; margin-top: 2px; }
   header .badge { display: inline-block; }
-  header {
-    padding: calc(22px - 12px * var(--h, 0)) 20px calc(26px - 14px * var(--h, 0));
-    will-change: padding;
-  }
-  header p {
-    opacity: calc(.92 * (1 - var(--h, 0)));
-    margin-top: calc(2px - 2px * var(--h, 0));
-    max-height: calc(40px * (1 - var(--h, 0)));
-    overflow: hidden;
-  }
-  header .badge {
-    opacity: 1 - var(--h, 0);
-    margin-top: calc(6px - 6px * var(--h, 0));
-    padding: calc(2px - 1px * var(--h, 0)) calc(12px - 4px * var(--h, 0));
-    max-height: calc(24px * (1 - var(--h, 0)));
-    overflow: hidden;
-  }
-  header.compact #btn-theme { top: 50%; transform: translateY(-50%); }
   header .badge {
     display: inline-block; margin-top: 6px;
     background: rgba(255,255,255,.18);
@@ -1702,20 +1684,8 @@ document.getElementById("cook-no").addEventListener("click", () => {
   });
   el.addEventListener("change", () => { if (save()) toast("💾 Journée enregistrée"); renderRide(); renderKcal(); });
 });
-// ---------- En-tête compact au défilement ----------
-const headerEl = document.querySelector("header");
-let lastScrollY = 0;
-let rafPending = false;
-function updateShrink() {
-  rafPending = false;
-  const y = window.scrollY || document.documentElement.scrollTop;
-  const t = Math.max(0, Math.min(1, y / 60));
-  headerEl.style.setProperty("--h", t.toFixed(3));
-}
-function onScroll() {
-  if (!rafPending) { rafPending = true; requestAnimationFrame(updateShrink); }
-}
-window.addEventListener("scroll", onScroll, { passive: true });
+
+
 document.getElementById("sugg-search").addEventListener("input", renderSuggestions);
 document.getElementById("new-item").addEventListener("keydown", e => {
   if (e.key === "Enter") document.getElementById("btn-add").click();
