@@ -51,6 +51,20 @@
     padding: 2px 12px; font-size: .7rem;
   }
   .wrap { max-width: 720px; margin: 0 auto; padding: 18px 16px; }
+  .progress { display: flex; gap: 6px; margin-bottom: 14px; }
+  .progress .dot {
+    flex: 1; height: 6px; border-radius: 3px;
+    background: var(--border); transition: background .15s ease;
+  }
+  .progress .dot.active { background: var(--accent); }
+  .progress .dot.done { background: var(--accent); opacity: .5; }
+  .step { display: none; }
+  .step.visible { display: block; }
+  .step-nav {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 14px; gap: 10px;
+  }
+  .step-count { font-size: .78rem; color: var(--muted); font-weight: 600; }
   .card {
     background: var(--card);
     border: 1px solid var(--border);
@@ -409,7 +423,9 @@
 </header>
 
 <div class="wrap">
+<div class="progress" id="progress"></div>
 
+<section class="step" data-step="1" id="step-1">
   <div class="card">
     <h2>📍 Ma zone géographique</h2>
     <label for="country" style="font-size:.85rem;color:var(--muted)">Pays actuel du voyage</label>
@@ -430,6 +446,13 @@
     <div class="cook-warn" id="cook-warn"></div>
     <div class="zone-info" id="zone-info"></div>
   </div>
+<div class="step-nav">
+<span></span>
+<span class="step-count">Étape 1 / 7</span>
+<button data-goto="2">Suivant →</button>
+</div>
+</section>
+<section class="step" data-step="2" id="step-2">
   <div class="card">
     <h2>🚴 Ma journée à vélo</h2>
     <div class="bio-grid">
@@ -443,7 +466,14 @@
     <p style="font-size:.72rem;color:var(--muted);margin-top:8px">⚙️ Poids du vélo + bagages : <strong id="ride-bike-weight">26,5 kg</strong></p>
     <div id="ride-result"></div>
   </div>
+<div class="step-nav">
+<button class="ghost" data-goto="1">← Précédent</button>
+<span class="step-count">Étape 2 / 7</span>
+<button data-goto="3">Suivant →</button>
+</div>
+</section>
 
+<section class="step" data-step="3" id="step-3">
   <div class="card">
     <h2>👤 Ma biometrie</h2>
     <div class="bio-grid">
@@ -465,8 +495,15 @@
     </div>
     <div id="bio-result"></div>
   </div>
+<div class="step-nav">
+<button class="ghost" data-goto="2">← Précédent</button>
+<span class="step-count">Étape 3 / 7</span>
+<button data-goto="4">Suivant →</button>
+</div>
+</section>
 
 
+<section class="step" data-step="4" id="step-4">
   <div class="card">
     <h2>💡 Produits locaux suggérés</h2>
     <div class="cat-tabs" id="cat-tabs"></div>
@@ -474,7 +511,14 @@
     <div class="suggestions" id="suggestions"></div>
     <p class="legend">Cliquez pour ajouter. Classé du moins cher (€) au plus cher (€€€). <span class="local-dot">⭐ = spécialité locale</span></p>
   </div>
+<div class="step-nav">
+<button class="ghost" data-goto="3">← Précédent</button>
+<span class="step-count">Étape 4 / 7</span>
+<button data-goto="5">Suivant →</button>
+</div>
+</section>
 
+<section class="step" data-step="5" id="step-5">
   <div class="card">
     <h2>🛒 Ma liste de courses <span id="item-count" style="font-size:.75rem;color:var(--muted);font-weight:400"></span> <span class="day-chip" id="days-chip" style="display:none"></span> <span class="weight-chip" id="weight-chip" style="display:none"></span></h2>
     <div class="row" style="margin-top:0">
@@ -490,14 +534,28 @@
     </div>
     <p class="empty" id="empty-msg">Aucun article — choisissez une zone et ajoutez des suggestions.</p>
   </div>
+<div class="step-nav">
+<button class="ghost" data-goto="4">← Précédent</button>
+<span class="step-count">Étape 5 / 7</span>
+<button data-goto="6">Suivant →</button>
+</div>
+</section>
 
 
 
+<section class="step" data-step="6" id="step-6">
   <div class="card">
     <h2>🔥 Estimation calorique</h2>
     <div id="kcal-box"></div>
   </div>
+<div class="step-nav">
+<button class="ghost" data-goto="5">← Précédent</button>
+<span class="step-count">Étape 6 / 7</span>
+<button data-goto="7">Suivant →</button>
+</div>
+</section>
 
+<section class="step" data-step="7" id="step-7">
   <div class="card">
     <h2>🥩 Apports en micro-nutriments</h2>
     <p style="font-size:.8rem;color:var(--muted);margin-bottom:10px">
@@ -505,6 +563,12 @@
     </p>
     <div id="macro-box"></div>
   </div>
+<div class="step-nav">
+<button class="ghost" data-goto="6">← Précédent</button>
+<span class="step-count">Étape 7 / 7</span>
+<button data-goto="1">Recommencer ↻</button>
+</div>
+</section>
 
 
 </div>
@@ -1101,7 +1165,7 @@ const NUTRI_FAMILIES = [
 // ---------- État ----------
 const LS_KEY = "velosillon.v2";
 const LS_KEY_V1 = "velosillon.v1";
-let state = { country: "France", region: "Bretagne", activeCat: "Féculents", canCook: true, bio: { sex: "h", age: null, weight: null, height: null }, ride: { km: null, dplus: null }, items: [] };
+let state = { step: 1, country: "France", region: "Bretagne", activeCat: "Féculents", canCook: true, bio: { sex: "h", age: null, weight: null, height: null }, ride: { km: null, dplus: null }, items: [] };
 
 function load() {
   try {
@@ -1723,6 +1787,21 @@ document.getElementById("btn-remove-done").addEventListener("click", () => {
   state.items = state.items.filter(it => !it.done); save(); renderList(); renderSuggestions();
 });
 
+// ---------- Assistant pas à pas ----------
+const TOTAL_STEPS = 7;
+function showStep(n) {
+  n = Math.max(1, Math.min(TOTAL_STEPS, n));
+  state.step = n;
+  document.querySelectorAll(".step").forEach(s => s.classList.toggle("visible", +s.dataset.step === n));
+  const dots = document.getElementById("progress");
+  dots.innerHTML = Array.from({ length: TOTAL_STEPS }, (_, i) =>
+    '<span class="dot ' + (i + 1 < n ? 'done' : i + 1 === n ? 'active' : '') + '"></span>'
+  ).join("");
+  window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+  save();
+}
+document.querySelectorAll("[data-goto]").forEach(b =>
+  b.addEventListener("click", () => showStep(+b.dataset.goto)));
 function applyTheme() {
   document.body.classList.toggle("dark", state.theme === "dark");
   const b = document.getElementById("btn-theme");
@@ -1736,6 +1815,7 @@ document.getElementById("btn-theme").addEventListener("click", () => {
 
 load();
 applyTheme();
+showStep(state.step || 1);
 renderZones(); renderTabs(); renderCookToggle(); renderSuggestions(); renderBio(); renderRide(); renderList();
 </script>
 </body>
