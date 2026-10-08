@@ -40,7 +40,7 @@
     box-shadow: 0 6px 20px rgba(30, 95, 58, .35);
     border-radius: 0 0 24px 24px;
   }
-  header h1 { font-size: 1.35rem; letter-spacing: .3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 52px; }
+  header h1 { font-size: 1.35rem; letter-spacing: .3px; padding-right: 56px; }
   header p { font-size: .8rem; opacity: .92; margin-top: 2px; }
   header .badge { display: inline-block; }
   header .badge {
@@ -349,7 +349,11 @@
     top: 50%;
     transform: translateY(-50%);
     right: 16px;
-    width: 42px; height: 42px;
+    width: 44px; height: 44px;
+    z-index: 20;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
     border-radius: 50%;
     padding: 0;
     font-size: 1.1rem;
