@@ -1673,6 +1673,7 @@ document.getElementById("cook-no").addEventListener("click", () => {
 });
 [["ride-km", "km"], ["ride-dplus", "dplus"]].forEach(([id, key]) => {
   const el = document.getElementById(id);
+  if (state.ride && state.ride[key] !== null && state.ride[key] !== undefined && state.ride[key] !== "") el.value = state.ride[key];
   el.addEventListener("input", () => {
     const v = el.value;
     state.ride = state.ride || { km: null, dplus: null };
