@@ -316,6 +316,19 @@
     max-width: 90vw;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .list-controls { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .list-controls button { font-size: .78rem; padding: 7px 12px; }
+  .day-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--accent-light); color: var(--accent);
+    padding: 2px 10px; border-radius: 10px; font-size: .7rem; font-weight: 700;
+  }
+  .weight-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #fdf0e3; color: var(--accent-2);
+    padding: 2px 10px; border-radius: 10px; font-size: .7rem; font-weight: 700;
+  }
+  body.dark .weight-chip { background: #33270f; }
   footer {
     text-align: center; font-size: .72rem; color: var(--muted);
     padding: 18px;
@@ -413,13 +426,18 @@
   </div>
 
   <div class="card">
-    <h2>🛒 Ma liste de courses <span id="item-count" style="font-size:.75rem;color:var(--muted);font-weight:400"></span></h2>
+    <h2>🛒 Ma liste de courses <span id="item-count" style="font-size:.75rem;color:var(--muted);font-weight:400"></span> <span class="day-chip" id="days-chip" style="display:none"></span> <span class="weight-chip" id="weight-chip" style="display:none"></span></h2>
     <div class="row" style="margin-top:0">
       <input type="text" id="new-item" placeholder="Ajouter un produit…" style="flex:2">
       <input type="number" id="new-qty" placeholder="Qté" min="0.1" step="0.5" style="flex:1">
       <button id="btn-add">➕</button>
     </div>
     <ul class="list" id="list"></ul>
+    <div class="list-controls">
+      <button class="ghost small" id="btn-clear-done">✓︎ Masquer cochés</button>
+      <button class="ghost small" id="btn-uncheck-all">↩︎ Décocher tout</button>
+      <button class="small del" id="btn-remove-done" style="display:none">🗑 Retirer cochés</button>
+    </div>
     <p class="empty" id="empty-msg">Aucun article — choisissez une zone et ajoutez des suggestions.</p>
   </div>
 
@@ -842,6 +860,27 @@ const KCAL = {
   "Manchego (fromage de brebis)":350,"Pain (brezel)":280,"Fromage (cheddar)":400,
 };
 
+// ---------- Poids approximatif par unit\u00e9 de vente (g) ----------
+const WEIGHT_G = {
+  "P\u00e2tes compl\u00e8tes":500,"Riz":500,"Riz complet":500,"Pain complet":500,"Pain de seigle":600,"Pommes de terre":1000,"Pomme de terre":1000,"Couscous":500,"Boulgour":500,"Quinoa":500,"Lentilles":500,"Lentilles vertes du Puy":500,"Pois chiches":500,"Haricots":500,"Haricots verts":500,"Haricots tarbais":500,"Choucroute":500,"Flocons d'avoine":500,"Muesli":500,"Muesli (flocons d'avoine)":500,"Igname":1000,"Patate douce":1000,"Ma\u00efs":500,"Polenta":500,"Tortillas / wraps":200,"Crackers / biscuits sal\u00e9s":200,"Pain pita":200,"Gnocchis":500,"Nouilles chinoises":500,"Farine de sarrasin":500,"Barres de c\u00e9r\u00e9ales":60,"Pain d'\u00e9pices":500,"Semoule":500,"Ch\u00e2taignes":300,"Sp\u00e4tzle (p\u00e2tes)":500,"Empanada / pain":300,"Ma\u00efs (polenta)":500,"Pois chiches / l\u00e9gumineuses":500,"Ma\u00efs (mamaliga)":500,"Pain (brezel)":150,
+  "\u0152ufs":400,"Sardines":125,"Maquereau":125,"Thon en conserve":150,"Poulet fermier":300,"Poulet":300,"Poulet de Bresse":300,"Dinde":300,"Escalope de veau":200,"Agneau":300,"Confit de canard":200,"Viande de renne":300,"Renne / viande":300,"Tofu":200,"Steak de soja":200,"Jambon blanc":100,"Jambon d'Auvergne":100,"Jambon serrano":100,"Jambon fum\u00e9":100,"Jambon de montagne":100,"Jambon (prosciutto)":100,"Saucisse s\u00e8che":100,"Saucisson":100,"P\u00e2t\u00e9 / terrine":100,"Lardons":100,"Lard fum\u00e9":100,"B\u0153uf s\u00e9ch\u00e9":100,"Figatellu (charcuterie)":100,"Chorizo":100,
+  "Poisson frais":300,"Cabillaud":300,"Saumon":300,"Saumon / poisson gras":300,"Saumon fum\u00e9":200,"Truite":300,"Filet de truite":300,"Poulpe":300,"Poulpe / poisson frais":300,"Merlu":300,"Poisson de lac":300,"Poisson de rivi\u00e8re":300,"Sandre (poisson de rivi\u00e8re)":300,"Filet de perche (poisson)":300,"Poisson fum\u00e9":200,"Hareng / maquereau":125,"Hareng / poisson gras":125,"Cabillaud / poisson frais":300,"Cabillaud / poisson":300,"Sardines / anchois":125,"Crevettes grises":200,"Anchois":100,"Moules":1000,"Hu\u00eetres":250,
+  "Camembert":250,"Saint-Nectaire":250,"Beaufort":250,"Munster":250,"Ch\u00e8vre":250,"Fromage de brebis":250,"Fromage manchego":250,"Manchego (fromage de brebis)":250,"Fromage de brebis (Idiaz\u00e1bal)":250,"Gorgonzola / fromages":250,"Fromage de brebis (pecorino)":250,"Fromage (Gouda)":250,"Fromage (Herve)":250,"Fromage":250,"Fromage de ch\u00e8vre":250,"Fromage (Cheddar)":250,"Fromage (Caerphilly)":250,"Fromage (cheddar)":250,"Fromage (brunost)":250,"Fromage (oscypek)":250,"Fromage de brebis (bryndza)":250,"Fromage blanc (sirene)":250,"Fromage de brebis (gbejniet)":250,"Fromage de brebis (Ossau)":250,"Comt\u00e9":250,"Gruy\u00e8re / fromage":250,"Emmental / fromage d'alpage":250,"Mozzarella":250,"Feta (fromage)":250,"Ricotta":250,"Cheddar / fromage":250,"Brocciu":250,"Halloumi (fromage)":250,"Parmesan":250,"Fromage de montagne":250,
+  "Yaourt":125,"Yaourt aux fruits":125,"Yaourt grec":125,"Skyr":125,"Yaourt (skyr)":125,"Fromage blanc (quark)":200,"Skyr":125,"Lait":1000,"Lait demi-\u00e9cr\u00e9m\u00e9":1000,"Lait ribot":1000,"Fromage frais (faisselle)":200,"Fromage \u00e0 tartiner":200,"Beurre":250,"Beurre demi-sel":250,"Cr\u00e8me fra\u00eeche":200,
+  "Huile d'olive":500,"Huile de colza":500,"Huile de tournesol":500,"Olives":200,"Miel":500,"Miels de montagne":500,"Miel de montagne":500,"Noix":200,"Amandes":200,"Noisettes":200,"Amandes / fruits secs":200,"Fruits secs":200,"Figues / fruits secs":200,"Beurre de cacahu\u00e8te":300,"S\u00e9same / tahini":300,"Graines de chia":300,"Chocolat noir (>70%)":100,"Confiture / marmelade":500,"A\u00efoli / mayonnaise":200,"Tapenade":200,"Pesto":200,"Moutarde":200,"Paprika (\u00e9pices)":50,
+  "Eau en grande quantit\u00e9":1500,"Eau p\u00e9tillante":1500,"Jus de fruits":1000,"Boisson isotonique (effort)":500,"Cidre (mod\u00e9ration)":750,"Bi\u00e8re (mod\u00e9ration)":500,"Bi\u00e8res (mod\u00e9ration)":500,"Eau de coco":300,"Smoothie / jus mix\u00e9s":300,"Caf\u00e9":250,"Th\u00e9 / tisane":100,"Chocolat chaud (poudre)":300,"Sirop (dilu\u00e9, mod\u00e9ration)":750,
+};
+const WEIGHT_PER_PIECE_G = { "Pommes":180,"Poires":180,"Oranges":150,"Mandarines / cl\u00e9mentines":80,"Cl\u00e9mentines":80,"Citrons":100,"Bananes":120,"Past\u00e8que":3000,"Melon":1200,"Melon vert":800,"Abricots":50,"Cerises":10,"Prunes":60,"Quetsches":60,"Myrtilles":10,"Baies":10,"Myrtilles / baies":10,"Fraises":15,"Framboises":10,"M\u00fbres":12,"Groseilles":10,"P\u00eaches":150,"Nectarines":140,"Kiwi":80,"Pamplemousse":300,"Ananas":1000,"Mangues":300,"Fruits de la passion":50,"Figues":50,"Figue / fruits":50,"Dattes":20,"Raisins":150,"Raisins / fruits":150,"Rhubarbe":100,
+  "Tomates":120,"Tomates cerises":20,"Courgettes":250,"Poireaux":150,"Carottes":80,"Chou-fleur":800,"Brocoli":400,"Endives":100,"Betteraves":150,"Aubergines":250,"Poivrons":150,"Piments doux":50,"Pimientos (poivrons)":50,"Salade verte":150,"Sucrine / batavia":200,"Chou":800,"Chou rouge":1000,"Chou kale":200,"Christophine":400,"Oignons":120,"Oignons de Roscoff":150,"Oignon rouge":120,"Ail":30,"\u00c9chalotes":50,"Concombres":300,"Radis":10,"\u00c9pinards":250,"Blettes":300,"Petits pois":300,"Champignons de Paris":300,"Champignons sauvages":250,"Artichauts":150,"Asperges":100,"Courge / potiron":1500,"Navets":150,"C\u00e9leri":300,"Fenouil":250,"Pousses de soja":150,"Avocats":200,"F\u00e8ves / l\u00e9gumes":300,"Basilic":30,"Chou-rave":300,"Cornichons":300,
+};
+function weightOf(name) {
+  if (WEIGHT_G[name] !== undefined) return WEIGHT_G[name];
+  if (WEIGHT_PER_PIECE_G[name] !== undefined) return WEIGHT_PER_PIECE_G[name];
+  const cat = catOf(name);
+  if (cat === "Boissons") return 1000;
+  return undefined;
+}
+
 // ---------- Biometrie & besoins nutritionnels ----------
 function bioNeeds() {
   const sex = state.bio.sex, age = state.bio.age, w = state.bio.weight, h = state.bio.height;
@@ -1261,6 +1300,38 @@ function renderList() {
   const ul = document.getElementById("list");
   const n = state.items.length;
   document.getElementById("item-count").textContent = n ? `(${n} article${n > 1 ? "s" : ""})` : "";
+  const daysChip = document.getElementById("days-chip");
+  const est = estimateKcal();
+  const needsD = bioNeeds();
+  const dailyK = needsD ? needsD.kcal : 3500;
+  const days = est.total / dailyK;
+  if (n && est.total > 0) {
+    daysChip.style.display = "inline-flex";
+    daysChip.textContent = days >= 1
+      ? `≈ ${days >= 10 ? Math.round(days) : days.toFixed(1)} jour${days >= 2 ? "s" : ""} de provisions`
+      : `≈ ${Math.round(days * 24)} h de provisions`;
+  } else daysChip.style.display = "none";
+  const nbDone = state.items.filter(it => it.done).length;
+  const btnC = document.getElementById("btn-clear-done");
+  btnC.textContent = state.hideDone && nbDone ? `👁 Afficher cochés (${nbDone})` : "✓︎ Masquer cochés";
+  btnC.style.display = nbDone ? "inline-block" : "none";
+  document.getElementById("btn-remove-done").style.display = nbDone ? "inline-block" : "none";
+  let totalG = 0;
+  for (const it of state.items) {
+    if (it.done) continue;
+    const u = unitOf(it.name);
+    let g = weightOf(it.name);
+    if (g === undefined) continue;
+    if (u.label === "kg") g = g * 1000;
+    if (u.label === "g") g = g * 0.01;
+    if (u.label === "L") g = g * 1;
+    totalG += g * it.qty;
+  }
+  const wChip = document.getElementById("weight-chip");
+  if (n && totalG > 0) {
+    wChip.style.display = "inline-flex";
+    wChip.textContent = `🎒 ≈ ${(totalG / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} kg sur le vélo`;
+  } else wChip.style.display = "none";
   renderKcal();
   const warn = document.getElementById("cook-warn");
   if (!state.canCook) {
@@ -1288,6 +1359,10 @@ function renderList() {
   Object.values(groups).forEach(g => g.sort((a, b) => (PRICE[a.it.name] || 2) - (PRICE[b.it.name] || 2)));
   noCat.sort((a, b) => (PRICE[a.it.name] || 2) - (PRICE[b.it.name] || 2));
   let html = "";
+  if (state.hideDone) {
+    for (const c of Object.keys(groups)) groups[c] = groups[c].filter(g => !g.it.done);
+    for (const c of Object.keys(groups)) if (!groups[c].length) delete groups[c];
+  }
   for (const c of catOrder) {
     if (!groups[c]) continue;
     html += `<li class="group-header" style="${catStyle(c === "_" ? "" : groups[c][0].it.name)}">
@@ -1301,9 +1376,10 @@ function renderList() {
       <button class="small del" data-del="${i}">🗑</button>
     </li>`).join("");
   }
-  if (noCat.length) {
-    html += `<li class="group-header"><span class="group-title">Autres · ${noCat.length}</span></li>`;
-    html += noCat.map(({ it, i }) =>
+  const noCat2 = state.hideDone ? noCat.filter(x => !x.it.done) : noCat;
+  if (noCat2.length) {
+    html += `<li class="group-header"><span class="group-title">Autres · ${noCat2.length}</span></li>`;
+    html += noCat2.map(({ it, i }) =>
       `<li class="${it.done ? "done" : ""}" data-i="${i}">
       <input type="checkbox" class="check" ${it.done ? "checked" : ""}>
       <span class="name">${it.name}</span>
@@ -1489,6 +1565,18 @@ document.getElementById("btn-reset").addEventListener("click", () => {
   if (confirm("Vider toute la liste ?")) {
     state.items = []; save(); renderList(); renderBars();
   }
+});
+document.getElementById("btn-clear-done").addEventListener("click", () => {
+  state.hideDone = !state.hideDone; save(); renderList();
+});
+document.getElementById("btn-uncheck-all").addEventListener("click", () => {
+  if (!state.items.some(it => it.done)) return;
+  state.items.forEach(it => it.done = false); save(); renderList(); renderSuggestions();
+});
+document.getElementById("btn-remove-done").addEventListener("click", () => {
+  const n = state.items.filter(it => it.done).length;
+  if (!n || !confirm(`Retirer les ${n} article${n > 1 ? "s" : ""} coch${n > 1 ? "és" : "é"} de la liste ?`)) return;
+  state.items = state.items.filter(it => !it.done); save(); renderList(); renderBars(); renderSuggestions();
 });
 
 function applyTheme() {
