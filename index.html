@@ -148,6 +148,19 @@
     margin-top: 12px;
   }
   .cat-tabs { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
+  .subcat-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .subcat-tab {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    background: #fff; border: 1.5px solid var(--border); border-radius: 14px;
+    padding: 8px 10px 6px; min-width: 72px; cursor: pointer;
+    transition: border-color .15s ease, background .15s ease;
+    user-select: none; text-align: center;
+  }
+  .subcat-tab .sc-icon { font-size: 1.5rem; line-height: 1.2; }
+  .subcat-tab .sc-label { font-size: .62rem; color: var(--muted); font-weight: 600; line-height: 1.15; }
+  .subcat-tab.active { border-color: var(--cat-color, var(--accent)); background: var(--cat-bg, var(--accent-light)); }
+  .subcat-tab.active .sc-label { color: var(--cat-color, var(--accent)); }
+  body.dark .subcat-tab { background: var(--card); }
   .cat-tab {
     padding: 6px 14px;
     border-radius: 20px;
@@ -507,6 +520,7 @@
   <div class="card">
     <h2>💡 Produits locaux suggérés</h2>
     <div class="cat-tabs" id="cat-tabs"></div>
+    <div class="subcat-tabs" id="subcat-tabs"></div>
     <input type="text" id="sugg-search" placeholder="🔎 Filtrer les produits…" style="margin-bottom:10px">
     <div class="suggestions" id="suggestions"></div>
     <p class="legend">Cliquez pour ajouter. Classé du moins cher (€) au plus cher (€€€). <span class="local-dot">⭐ = spécialité locale</span></p>
@@ -875,6 +889,65 @@ const NEEDS_COOKING = new Set([
   "Fèves / légumes",
   "Moules",
 ]);
+
+
+// ---------- Sous-catégories illustrées ----------
+const SUBCATEGORIES = {
+  "Féculents": [
+    { key: "pates",  label: "Pâtes & céréales", icon: "🍚", match: ["Pâtes","pâtes","Nouilles","Spätzle","Couscous","Boulgour","Semoule","Polenta","Maïs","Farine","Gnocchis"] },
+    { key: "pain",   label: "Pains", icon: "🥯", match: ["Pain","brezel","Empanada","Tortillas","Crackers"] },
+    { key: "riz",    label: "Riz & grains", icon: "🍚", match: ["Riz","Quinoa"] },
+    { key: "legum",  label: "Légumineuses", icon: "🍜", match: ["Lentilles","Pois chiches","Haricots","Choucroute","Fèves"] },
+    { key: "tuberc", label: "Pommes de terre & patates", icon: "🥔", match: ["Pommes de terre","Pomme de terre","Patate","Igname"] },
+    { key: "avoine", label: "Flocons & muesli", icon: "🥣", match: ["Flocons","Muesli","avoine","Barres","Châtaignes"] },
+  ],
+  "Protéines": [
+    { key: "viande", label: "Viandes", icon: "🥩", match: ["Poulet","Dinde","Veau","Agneau","canard","Bresse","Jambon","Saucisse","Saucisson","Pâté","Lardons","Lard fumé","Chorizo","renne","Renne","Figatellu","Figatellu","Escalope"] },
+    { key: "poisson", label: "Poissons", icon: "🐟", match: ["Sardines","Maquereau","Thon","Poisson","Cabillaud","Saumon","Truite","Anchois","Merlu","Hareng","Poulpe"] },
+    { key: "fruitsmer", label: "Fruits de mer", icon: "🦚", match: ["Crevettes","Moules","Huîtres","Escargots"] },
+    { key: "oeufs",  label: "Œufs & végétal", icon: "🥚", match: ["Œufs","Tofu","Steak de soja","quark","Skyr","skyr"] },
+    { key: "sec",    label: "Fruits secs & oléagineux", icon: "🧀", match: ["Fruits secs","Noix","Amandes","Lentilles","Pois chiches","Haricots"] },
+  ],
+  "Légumes": [
+    { key: "racines", label: "Racines & bulbes", icon: "🥕", match: ["Carottes","Oignons","Oignon","Ail","Échalotes","Navets","Betteraves","Radis","Céleri","Chou-rave","Fenouil","Poireaux"] },
+    { key: "feuilles", label: "Feuilles & salades", icon: "🥬", match: ["Salade","Sucrine","Épinards","Blettes","Mâche","Chou","kale","Pousses","Endives"] },
+    { key: "fruits", label: "Légumes-fruits", icon: "🍅", match: ["Tomates","Courgettes","Aubergines","Poivrons","Piments","Pimientos","Concombres","Avocats","Cornichons","Christophine"] },
+    { key: "fleurs", label: "Choux-fleurs & brocolis", icon: "🥦", match: ["Chou-fleur","Brocoli","Champignons","Artichauts","Asperges","Courge","potiron","Petits pois","Fèves","Haricots verts"] },
+    { key: "herbes", label: "Herbes", icon: "🌿", match: ["Basilic"] },
+  ],
+  "Fruits": [
+    { key: "pommes", label: "Pommes & poires", icon: "🍏", match: ["Pommes","Poires"] },
+    { key: "agrumes", label: "Agrumes", icon: "🍊", match: ["Oranges","Mandarines","Clémentines","Citrons","Pamplemousse"] },
+    { key: "rouges", label: "Fruits rouges & baies", icon: "🍒", match: ["Fraises","Cerises","Myrtilles","Baies","Framboises","Mûres","Groseilles","Cassis","Fraise","Rhubarbe","Abricots","Prunes","Quetsches","Pêches","Nectarines","Raisins"] },
+    { key: "exotiques", label: "Exotiques", icon: "🍍", match: ["Bananes","Mangues","Ananas","passion","Kiwi","Melon","Pastèque","Figues","Figue"] },
+    { key: "secs",   label: "Fruits secs & oléagineux", icon: "🧀", match: ["Fruits secs","Noix","Amandes","Noisettes","Dattes","Châtaignes","Compotes"] },
+  ],
+  "Produits laitiers": [
+    { key: "fromages", label: "Fromages", icon: "🧀", match: ["Camembert","Saint-Nectaire","Beaufort","Munster","Chèvre","brebis","manchego","Manchego","Gorgonzola","pecorino","Gouda","Herve","Fromage","Cheddar","Caerphilly","brunost","oscypek","bryndza","sirene","gbejniet","Comté","Gruyère","Emmental","Mozzarella","Feta","Parmesan","montagne","Ricotta","Brocciu","Halloumi"] },
+    { key: "yaourts", label: "Yaourts & fromages blancs", icon: "🥛", match: ["Yaourt","Skyr","skyr","quark","faisselle","tartiner"] },
+    { key: "lait",   label: "Laits", icon: "🥜", match: ["Lait"] },
+    { key: "beurre", label: "Beurre & crème", icon: "🧈", match: ["Beurre","Crème"] },
+  ],
+  "Matières grasses": [
+    { key: "huiles", label: "Huiles", icon: "🧂", match: ["Huile","Beurre","Crème"] },
+    { key: "tartiner", label: "À tartiner", icon: "🍪", match: ["Miel","Confiture","Beurre de cacahuète","tahini","Chocolat","Tapenade","Pesto","mayonnaise","Moutarde"] },
+    { key: "oléagineux", label: "Oléagineux", icon: "🌰", match: ["Noix","Amandes","Noisettes","Olives","Graines"] },
+    { key: "épices", label: "Épices", icon: "🌶️", match: ["Paprika","Safran"] },
+  ],
+  "Boissons": [
+    { key: "eau",    label: "Eaux", icon: "💧", match: ["Eau"] },
+    { key: "chaudes", label: "Boissons chaudes", icon: "☕", match: ["Thé","Café","Chocolat chaud"] },
+    { key: "jus",    label: "Jus & smoothies", icon: "🥤", match: ["Jus","Smoothie","Eau de coco","Sirop","Lait"] },
+    { key: "alcool", label: "Alcool (modération)", icon: "🍺", match: ["Cidre","Bière"] },
+    { key: "sport",  label: "Effort", icon: "🏅", match: ["isotonique"] },
+  ],
+};
+function subcatOf(name, cat) {
+  const lname = name.toLowerCase();
+  const subs = SUBCATEGORIES[cat] || [];
+  for (const s of subs) if (s.match.some(m => lname.includes(m.toLowerCase()))) return s;
+  return null;
+}
 
 // ---------- Couleurs par catégorie ----------
 const CAT_COLORS = {
@@ -1408,20 +1481,39 @@ function renderTabs() {
     `<span class="cat-tab ${c === state.activeCat ? "active" : ""} c${(CAT_COLORS[c] || {}).c || 3}" data-cat="${c}">${c}</span>`
   ).join("");
   tabs.querySelectorAll(".cat-tab").forEach(el =>
-    el.addEventListener("click", () => { state.activeCat = el.dataset.cat; save(); renderTabs(); renderSuggestions(); }));
+    el.addEventListener("click", () => { state.activeCat = el.dataset.cat; state.subcat = null; save(); renderTabs(); renderSubcats(); renderSuggestions(); }));
+}
+
+function renderSubcats() {
+  const box = document.getElementById("subcat-tabs");
+  const subs = SUBCATEGORIES[state.activeCat] || [];
+  const current = state.subcat || null;
+  let h = '<span class="subcat-tab ' + (!current ? 'active' : '') + '" data-sub="" style="' + catStyle(state.activeCat) + '"><span class="sc-icon">\ud83d\udcd1</span><span class="sc-label">Tout</span></span>';
+  h += subs.map(s =>
+    '<span class="subcat-tab ' + (current === s.key ? 'active' : '') + '" data-sub="' + s.key + '" style="' + catStyle(state.activeCat) + '">' +
+    '<span class="sc-icon">' + s.icon + '</span><span class="sc-label">' + s.label + '</span></span>'
+  ).join("");
+  box.innerHTML = h;
+  box.querySelectorAll(".subcat-tab").forEach(el =>
+    el.addEventListener("click", () => {
+      state.subcat = el.dataset.sub || null;
+      save(); renderSubcats(); renderSuggestions();
+    }));
 }
 
 function renderSuggestions() {
   const z = currentRegion();
   const filter = (document.getElementById("sugg-search").value || "").trim().toLowerCase();
   const base = CATEGORIES[state.activeCat] || [];
-  const localFirst = filter ? [] : [...z.local].filter(p => catOf(p) === state.activeCat);
+  const sc = state.subcat ? (SUBCATEGORIES[state.activeCat] || []).find(s => s.key === state.subcat) : null;
+  const inSub = p => !sc || (subcatOf(p, state.activeCat) || {}).key === sc.key;
+  const localFirst = filter ? [] : [...z.local].filter(p => catOf(p) === state.activeCat).filter(inSub);
   let rest;
   if (filter) {
     const pool = Object.values(CATEGORIES).flat();
-    rest = [...new Set(pool)].filter(p => p.toLowerCase().includes(filter));
+    rest = [...new Set(pool)].filter(p => p.toLowerCase().includes(filter)).filter(p => catOf(p) === state.activeCat).filter(inSub);
   } else {
-    rest = base.filter(p => !localFirst.includes(p));
+    rest = base.filter(p => !localFirst.includes(p)).filter(inSub);
   }
   const isLocal = p => z.local.includes(p);
   let all = [...new Set([...localFirst, ...rest])];
@@ -1816,7 +1908,7 @@ document.getElementById("btn-theme").addEventListener("click", () => {
 load();
 applyTheme();
 showStep(state.step || 1);
-renderZones(); renderTabs(); renderCookToggle(); renderSuggestions(); renderBio(); renderRide(); renderList();
+renderZones(); renderTabs(); renderSubcats(); renderCookToggle(); renderSuggestions(); renderBio(); renderRide(); renderList();
 </script>
 </body>
 </html>
