@@ -357,9 +357,7 @@
     <div class="cat-tabs" id="cat-tabs"></div>
     <input type="text" id="sugg-search" placeholder="🔎 Filtrer les produits…" style="margin-bottom:10px">
     <div class="suggestions" id="suggestions"></div>
-    <p style="font-size:.75rem;color:var(--muted);margin-top:10px">
-      Cliquez sur un produit pour l'ajouter à votre liste. Les suggestions dépendent de la zone choisie.
-    </p>
+    <p class="legend">Cliquez pour ajouter. Classé du moins cher (€) au plus cher (€€€). <span class="local-dot">⭐ = spécialité locale</span></p>
   </div>
 
   <div class="card">
@@ -838,7 +836,7 @@ function renderSuggestions() {
           const pr = PRICE[p] || 2;
           const euro = "€".repeat(pr) + "\u00A0".repeat(3 - pr);
           const isLocal = z.local.includes(p);
-          return `<span class="sugg ${isLocal ? "local" : ""}" data-name="${p}" style="${catStyle(p)}" title="${isLocal ? "Spécialité locale — " : ""}Indice de prix : ${"€".repeat(pr)}">${p}<span class="price">${euro}</span></span>`;
+          return `<span class="sugg ${isLocal ? "local" : ""}" data-name="${p}" style="${catStyle(p)}" title="${isLocal ? "Spécialité locale — " : ""}Indice de prix : ${"€".repeat(pr)}">${isLocal ? "⭐ " : ""}${p}<span class="price">${euro}</span></span>`;
         }).join("")
       : `<span class="empty">Aucun produit trouvé pour « ${filter} »${!state.canCook ? " — essayez d'activer la cuisson ou changez de catégorie" : ""}</span>`;
   document.querySelectorAll(".sugg").forEach(el =>
