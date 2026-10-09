@@ -439,7 +439,7 @@
 <div class="progress" id="progress"></div>
 
 <section class="step" data-step="1" id="step-1">
-  <div class="card">
+<div class="card">
     <h2>📍 Ma zone géographique</h2>
     <label for="country" style="font-size:.85rem;color:var(--muted)">Pays actuel du voyage</label>
     <select id="country"></select>
@@ -461,12 +461,12 @@
   </div>
 <div class="step-nav">
 <span></span>
-<span class="step-count">Étape 1 / 7</span>
+<span class="step-count">Étape 1 / 5</span>
 <button data-goto="2">Suivant →</button>
 </div>
 </section>
 <section class="step" data-step="2" id="step-2">
-  <div class="card">
+<div class="card">
     <h2>🚴 Ma journée à vélo</h2>
     <div class="bio-grid">
       <label>Distance du jour (km)
@@ -481,13 +481,12 @@
   </div>
 <div class="step-nav">
 <button class="ghost" data-goto="1">← Précédent</button>
-<span class="step-count">Étape 2 / 7</span>
+<span class="step-count">Étape 2 / 5</span>
 <button data-goto="3">Suivant →</button>
 </div>
 </section>
-
 <section class="step" data-step="3" id="step-3">
-  <div class="card">
+<div class="card">
     <h2>👤 Ma biometrie</h2>
     <div class="bio-grid">
       <label>Sexe
@@ -510,14 +509,12 @@
   </div>
 <div class="step-nav">
 <button class="ghost" data-goto="2">← Précédent</button>
-<span class="step-count">Étape 3 / 7</span>
+<span class="step-count">Étape 3 / 5</span>
 <button data-goto="4">Suivant →</button>
 </div>
 </section>
-
-
 <section class="step" data-step="4" id="step-4">
-  <div class="card">
+<div class="card">
     <h2>💡 Produits locaux suggérés</h2>
     <div class="cat-tabs" id="cat-tabs"></div>
     <div class="subcat-tabs" id="subcat-tabs"></div>
@@ -525,15 +522,7 @@
     <div class="suggestions" id="suggestions"></div>
     <p class="legend">Cliquez pour ajouter. Classé du moins cher (€) au plus cher (€€€). <span class="local-dot">⭐ = spécialité locale</span></p>
   </div>
-<div class="step-nav">
-<button class="ghost" data-goto="3">← Précédent</button>
-<span class="step-count">Étape 4 / 7</span>
-<button data-goto="5">Suivant →</button>
-</div>
-</section>
-
-<section class="step" data-step="5" id="step-5">
-  <div class="card">
+<div class="card">
     <h2>🛒 Ma liste de courses <span id="item-count" style="font-size:.75rem;color:var(--muted);font-weight:400"></span> <span class="day-chip" id="days-chip" style="display:none"></span> <span class="weight-chip" id="weight-chip" style="display:none"></span></h2>
     <div class="row" style="margin-top:0">
       <input type="text" id="new-item" placeholder="Ajouter un produit…" style="flex:2">
@@ -549,28 +538,17 @@
     <p class="empty" id="empty-msg">Aucun article — choisissez une zone et ajoutez des suggestions.</p>
   </div>
 <div class="step-nav">
-<button class="ghost" data-goto="4">← Précédent</button>
-<span class="step-count">Étape 5 / 7</span>
-<button data-goto="6">Suivant →</button>
+<button class="ghost" data-goto="3">← Précédent</button>
+<span class="step-count">Étape 4 / 5</span>
+<button data-goto="5">Suivant →</button>
 </div>
 </section>
-
-
-
-<section class="step" data-step="6" id="step-6">
-  <div class="card">
+<section class="step" data-step="5" id="step-5">
+<div class="card">
     <h2>🔥 Estimation calorique</h2>
     <div id="kcal-box"></div>
   </div>
-<div class="step-nav">
-<button class="ghost" data-goto="5">← Précédent</button>
-<span class="step-count">Étape 6 / 7</span>
-<button data-goto="7">Suivant →</button>
-</div>
-</section>
-
-<section class="step" data-step="7" id="step-7">
-  <div class="card">
+<div class="card">
     <h2>🥩 Apports en micro-nutriments</h2>
     <p style="font-size:.8rem;color:var(--muted);margin-bottom:10px">
       Vitamines et minéraux de votre liste (hors articles cochés), comparés aux besoins journaliers d'un cyclotouriste.
@@ -578,11 +556,13 @@
     <div id="macro-box"></div>
   </div>
 <div class="step-nav">
-<button class="ghost" data-goto="6">← Précédent</button>
-<span class="step-count">Étape 7 / 7</span>
+<button class="ghost" data-goto="4">← Précédent</button>
+<span class="step-count">Étape 5 / 5</span>
 <button data-goto="1">Recommencer ↻</button>
 </div>
 </section>
+</div>
+
 
 
 </div>
@@ -1880,7 +1860,7 @@ document.getElementById("btn-remove-done").addEventListener("click", () => {
 });
 
 // ---------- Assistant pas à pas ----------
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = 5;
 function showStep(n) {
   n = Math.max(1, Math.min(TOTAL_STEPS, n));
   state.step = n;
