@@ -532,7 +532,7 @@
     <ul class="list" id="list"></ul>
     <div class="list-controls">
       <button class="ghost small" id="btn-clear-done">✓︎ Masquer cochés</button>
-      <button class="ghost small" id="btn-uncheck-all">↩︎ Décocher tout</button>
+      <button class="ghost small" id="btn-uncheck-all">↩︎ Décocher tout</button><button class="ghost small" id="btn-export">📤 Exporter la liste</button>
       <button class="small del" id="btn-remove-done" style="display:none">🗑 Retirer cochés</button>
     </div>
     <p class="empty" id="empty-msg">Aucun article — choisissez une zone et ajoutez des suggestions.</p>
@@ -570,7 +570,7 @@
 <div class="toast" id="toast"></div>
 <footer>VeloSillon — vos données restent sur votre appareil (stockage local). Fonctionne hors-ligne.</footer>
 
-<script>
+<meta name="theme-color" content="#2f7d4f"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9A%B4%3C/text%3E%3C/svg%3E"><script>
 "use strict";
 
 // ---------- Données : pays d'Europe et régions ----------
@@ -1853,6 +1853,17 @@ document.getElementById("btn-uncheck-all").addEventListener("click", () => {
   if (!state.items.some(it => it.done)) return;
   state.items.forEach(it => it.done = false); save(); renderList(); renderSuggestions();
 });
+document.getElementById("btn-export").addEventListener("click", () => {
+  if (!state.items.length) { toast("Aucun article à exporter"); return; }
+  const lines = state.items.map(it => `- [${it.done ? "x" : " "}] ${it.name}${it.qty ? " ×" + it.qty : ""}`);
+  const txt = `VeloSillon — Liste de courses\nZone : ${state.country || "?"} / ${state.region || "?"}\n\n` + lines.join("\n");
+  if (navigator.share) { navigator.share({ title: "VeloSillon — courses", text: txt }).catch(() => {}); return; }
+  const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "velosillon-courses.txt"; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  toast("📤 Liste exportée");
+});
 document.getElementById("btn-remove-done").addEventListener("click", () => {
   const n = state.items.filter(it => it.done).length;
   if (!n || !confirm(`Retirer les ${n} article${n > 1 ? "s" : ""} coch${n > 1 ? "és" : "é"} de la liste ?`)) return;
@@ -1886,6 +1897,7 @@ document.getElementById("btn-theme").addEventListener("click", () => {
 });
 
 load();
+if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("sw.js").catch(() => {});
 applyTheme();
 showStep(state.step || 1);
 renderZones(); renderTabs(); renderSubcats(); renderCookToggle(); renderSuggestions(); renderBio(); renderRide(); renderList();
