@@ -1,5 +1,5 @@
 "use strict";
-const CACHE = "velosillon-v2";
+const CACHE = "velosillon-v3";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest"];
 const NETWORK_FIRST = ["./", "./index.html"];
 
@@ -23,7 +23,7 @@ self.addEventListener("fetch", e => {
   const isNetworkFirst = NETWORK_FIRST.includes(key) || e.request.mode === "navigate";
 
   e.respondWith(
-    fetch(e.request).then(res => {
+    fetch(e.request, { cache: "no-store" }).then(res => {
       const copy = res.clone();
       caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
       return res;
