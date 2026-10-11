@@ -1958,7 +1958,9 @@ document.getElementById("btn-theme").addEventListener("click", () => {
 });
 
 load();
-if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("sw.js").catch(() => {});
+if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("sw.js").then(reg => {
+    reg.addEventListener("updatefound", () => { const sw = reg.installing; if (sw) sw.addEventListener("statechange", () => { if (sw.state === "installed" && navigator.serviceWorker.controller) { navigator.serviceWorker.controller.postMessage("skip-waiting"); } }); });
+  }).catch(() => {});
 applyTheme();
 showStep(state.step || 1);
 renderZones(); renderTabs(); renderSubcats(); renderCookToggle(); renderSuggestions(); renderBio(); renderRide(); renderList(); renderCart();
