@@ -381,6 +381,40 @@
   }
   .legend { font-size: .72rem; color: var(--muted); margin-top: 12px; }
   .legend .local-dot { color: var(--accent-2); font-weight: 700; }
+  #btn-cart {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 68px;
+    width: 44px; height: 44px;
+    z-index: 20;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    border-radius: 50%;
+    padding: 0;
+    font-size: 1.1rem;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,.15);
+    box-shadow: none;
+    border: 1px solid rgba(255,255,255,.35);
+    position: absolute;
+  }
+  #btn-cart.has-items {
+    box-shadow: 0 0 0 3px rgba(255,255,255,.35);
+  }
+  #cart-count {
+    position: absolute;
+    top: -4px; right: -4px;
+    min-width: 18px; height: 18px;
+    border-radius: 9px;
+    background: var(--accent-2);
+    color: #fff;
+    font-size: .68rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 4px;
+    border: 2px solid rgba(30, 95, 58, .9);
+  }
   #btn-theme {
     position: absolute;
     top: 50%;
@@ -439,6 +473,8 @@
 </head>
 <body>
 <header>
+  <button id="btn-cart" title="Voir ma liste de courses" aria-label="Voir ma liste de courses">🛒<span id="cart-count" hidden>0</span>
+  </button>
   <button id="btn-theme" title="Basculer jour / nuit" aria-label="Basculer le thème">🌙</button>
   <h1>🚴 VeloSillon — Courses du voyage</h1>
   <p>Liste de courses par zone géographique, pour une alimentation variée et riche.</p>
@@ -532,13 +568,7 @@
     <div class="suggestions" id="suggestions"></div>
     <p class="legend">Cliquez pour ajouter. Classé du moins cher (€) au plus cher (€€€). <span class="local-dot">⭐ = spécialité locale</span></p>
   </div>
-<div class="card">
-    <h2>🛒 Ma liste de courses <span id="item-count" style="font-size:.75rem;color:var(--muted);font-weight:400"></span> <span class="day-chip" id="days-chip" style="display:none"></span> <span class="weight-chip" id="weight-chip" style="display:none"></span></h2>
-    <div class="row" style="margin-top:0">
-      <input type="text" id="new-item" placeholder="Ajouter un produit…" style="flex:2">
-      <input type="number" id="new-qty" placeholder="Qté" min="0.1" step="0.5" style="flex:1">
-      <button id="btn-add">➕</button>
-    </div>
+
     <ul class="list" id="list"></ul>
     <div class="list-controls">
       <button class="ghost small" id="btn-clear-done">✓︎ Masquer cochés</button>
@@ -554,6 +584,14 @@
 </div>
 </section>
 <section class="step" data-step="5" id="step-5">
+
+<div class="card">
+    <h2>🛒 Ma liste de courses <span id="item-count" style="font-size:.75rem;color:var(--muted);font-weight:400"></span> <span class="day-chip" id="days-chip" style="display:none"></span> <span class="weight-chip" id="weight-chip" style="display:none"></span></h2>
+    <div class="row" style="margin-top:0">
+      <input type="text" id="new-item" placeholder="Ajouter un produit…" style="flex:2">
+      <input type="number" id="new-qty" placeholder="Qté" min="0.1" step="0.5" style="flex:1">
+      <button id="btn-add">➕</button>
+    </div>
 <div class="card">
     <h2>🔥 Estimation calorique</h2>
     <div id="kcal-box"></div>
@@ -1618,13 +1656,26 @@ function renderList() {
   ul.querySelectorAll("li").forEach(li => {
     const i = +li.dataset.i;
     li.querySelector(".check").addEventListener("change", e => {
-      state.items[i].done = e.target.checked; save(); renderList();
+      state.items[i].done = e.target.checked; save(); renderList(); renderCart();
     });
     li.querySelector("[data-del]").addEventListener("click", () => {
-      state.items.splice(i, 1); save(); renderList(); renderSuggestions();
+      state.items.splice(i, 1); save(); renderList(); renderCart(); renderSuggestions();
     });
   });
 }
+
+function renderCart() {
+  const btn = document.getElementById("btn-cart");
+  const badge = document.getElementById("cart-count");
+  const n = state.items.filter(it => !it.done).length;
+  badge.textContent = n;
+  badge.hidden = n === 0;
+  btn.classList.toggle("has-items", n > 0);
+}
+document.getElementById("btn-cart").addEventListener("click", () => {
+  showStep(5);
+  toast("🛒 Ma liste de courses");
+});
 
 function renderKcal() {
   const { total, byCat } = estimateKcal();
@@ -1910,7 +1961,7 @@ load();
 if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("sw.js").catch(() => {});
 applyTheme();
 showStep(state.step || 1);
-renderZones(); renderTabs(); renderSubcats(); renderCookToggle(); renderSuggestions(); renderBio(); renderRide(); renderList();
+renderZones(); renderTabs(); renderSubcats(); renderCookToggle(); renderSuggestions(); renderBio(); renderRide(); renderList(); renderCart();
 </script>
 </body>
 </html>
