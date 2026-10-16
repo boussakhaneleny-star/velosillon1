@@ -1933,7 +1933,7 @@ function renderReport() {
   htmlOut += '<div class="card"><h3 style="margin-top:0">📊 Calories par jour</h3><div class="rep-chart">' + svgMonthlyKcal(logged, m, dailyNeeds.kcal) + '</div><p class="legend">Barres vertes \u2265 besoin \u00b7 jaunes \u2265 75 % \u00b7 orange en carence. Ligne pointill\u00e9e = besoin de ' + Math.round(dailyNeeds.kcal).toLocaleString("fr-FR") + ' kcal/jour.</p></div>';
   htmlOut += '<div class="card"><h3 style="margin-top:0">Couverture moyenne par jour</h3>';
   for (const r of rows) {
-    const pct = Math.min(150, Math.round(r.val / r.need * 100));
+    const pct = Math.round(r.val / r.need * 100);
     const color = pct >= 100 ? "#2f7d4f" : pct >= 75 ? "#d69e2e" : "#c05621";
     htmlOut += '<div class="macro-row"><div class="macro-head"><span class="macro-name">' + r.label + '</span><span><span class="macro-val">' + (r.val < 10 ? Math.round(r.val * 10) / 10 : Math.round(r.val)).toLocaleString("fr-FR") + ' ' + r.unit + '</span> <span class="macro-kcal">' + pct + ' % du besoin</span></span></div><div class="kcal-cat-bar"><span class="kcal-cat-fill" style="width:' + Math.min(100, pct) + "%;background:" + color + '"></span></div></div>';
   }
