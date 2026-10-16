@@ -479,7 +479,9 @@
   body.dark .sugg.local {
     background: linear-gradient(135deg, #2a2118, var(--card));
   }
-  body.dark .seg-btn { background: var(--card) !important; }
+  body.dark .seg-btn:not(.active) { background: var(--card) !important; }
+  body.dark .seg-btn.active { background: var(--accent) !important; }
+  body.dark #cook-no.seg-btn.active { background: var(--accent-2) !important; }
   body.dark button.ghost {
     background: var(--accent-light);
     border-color: rgba(76, 157, 99, .35);
