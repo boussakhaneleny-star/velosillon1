@@ -1644,8 +1644,7 @@ function renderList() {
     </li>`).join("");
   }
   ul.innerHTML = html;
-  ul.querySelectorAll("li").forEach(li => {
-    const i = +li.dataset.i;
+  ul.querySelectorAll("li[data-i]").forEach(li => {  const i = +li.dataset.i;
     li.querySelector(".check").addEventListener("change", e => {
       state.items[i].done = e.target.checked; save(); renderList(); renderCart();
     });
