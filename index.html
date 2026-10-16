@@ -599,6 +599,7 @@
     </div>
     <ul class="list" id="list"></ul>
     <div class="list-controls">
+      <button class="small del" id="btn-reset">🗑️ Vider la liste</button>
       <button class="ghost small" id="btn-clear-done">✓︎ Masquer cochés</button>
       <button class="ghost small" id="btn-uncheck-all">↩︎ Décocher tout</button><button class="ghost small" id="btn-export">📤 Exporter la liste</button>
       <button class="small del" id="btn-remove-done" style="display:none">🗑 Retirer cochés</button>
@@ -2042,6 +2043,13 @@ document.getElementById("btn-geo").addEventListener("click", () => {
     renderZones(); renderSuggestions();
     toast(`Zone détectée : ${z.country} — ${z.region}`);
   }, () => toast("Position refusée — choisissez une zone"), { timeout: 8000 });
+});
+document.getElementById("btn-reset").addEventListener("click", () => {
+  archiveDay();
+  if (!state.items.length) return;
+  if (confirm("Vider toute la liste ?")) {
+    state.items = []; save(); renderList();
+  }
 });
 document.getElementById("btn-clear-done").addEventListener("click", () => {
   state.hideDone = !state.hideDone; save(); renderList();
