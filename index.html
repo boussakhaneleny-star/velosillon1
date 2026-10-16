@@ -77,6 +77,18 @@
     .step-nav { left: 16px; right: 16px; max-width: none; border-radius: 16px 16px 0 0; }
   }
   body.dark .step-nav { box-shadow: 0 -4px 14px rgba(0, 0, 0, .35); }
+
+  /* Mode paysage (téléphone) : bannières compactes, seuls les boutons restent */
+  @media (max-height: 480px) and (orientation: landscape) {
+    header h1, header p, header .badge { display: none; }
+    header { padding: 6px 12px; }
+    header .progress { margin: 4px 0 0; }
+    .step-nav { height: 46px; padding: 6px 12px; }
+    .step-count { display: none; }
+    .step h2 { font-size: 1rem; margin: 0 0 8px; }
+    .card { padding: 10px 14px; }
+    #btn-report { width: 42px; height: 42px; bottom: calc(54px + env(safe-area-inset-bottom, 0px)); right: 10px; font-size: 1.1rem; }
+  }
   .step-count { font-size: .78rem; color: var(--muted); font-weight: 600; white-space: nowrap; }
   .step-nav button { white-space: nowrap; }
   .card {
