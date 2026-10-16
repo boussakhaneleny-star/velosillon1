@@ -1,28 +1,61 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- fond rond vert uni -->
+  <!-- fond rond vert -->
   <circle cx="256" cy="256" r="256" fill="#2f7d4f"/>
 
-  <!-- roue de vélo : cercle + rayons -->
-  <g stroke="#ffffff" fill="none">
-    <circle cx="256" cy="256" r="170" stroke-width="22"/>
-    <circle cx="256" cy="256" r="26" stroke-width="16"/>
-    <g stroke-width="10">
-      <line x1="256" y1="105" x2="256" y2="235"/>
-      <line x1="256" y1="277" x2="256" y2="407"/>
-      <line x1="105" y1="256" x2="235" y2="256"/>
-      <line x1="277" y1="256" x2="407" y2="256"/>
-      <line x1="149" y1="149" x2="241" y2="241"/>
-      <line x1="271" y1="271" x2="363" y2="363"/>
-      <line x1="363" y1="149" x2="271" y2="241"/>
-      <line x1="241" y1="271" x2="149" y2="363"/>
+  <!-- ROUE DE VÉLO RÉALISTE -->
+  <g>
+    <!-- pneu -->
+    <circle cx="256" cy="256" r="176" fill="none" stroke="#3a3a3a" stroke-width="26"/>
+    <!-- flanc du pneu -->
+    <circle cx="256" cy="256" r="163" fill="none" stroke="#ffffff" stroke-width="2" opacity=".35"/>
+    <!-- jante -->
+    <circle cx="256" cy="256" r="146" fill="none" stroke="#e8e8e8" stroke-width="14"/>
+    <circle cx="256" cy="256" r="138" fill="none" stroke="#b9b9b9" stroke-width="3"/>
+    <!-- rayons croisés réalistes -->
+    <g stroke="#d9d9d9" stroke-width="6">
+      <line x1="256" y1="118" x2="268" y2="238"/>
+      <line x1="256" y1="394" x2="244" y2="274"/>
+      <line x1="118" y1="256" x2="238" y2="244"/>
+      <line x1="394" y1="256" x2="274" y2="268"/>
+      <line x1="159" y1="159" x2="248" y2="232"/>
+      <line x1="353" y1="353" x2="264" y2="280"/>
+      <line x1="353" y1="159" x2="280" y2="248"/>
+      <line x1="159" y1="353" x2="232" y2="264"/>
+      <line x1="256" y1="118" x2="292" y2="228"/>
+      <line x1="256" y1="394" x2="220" y2="284"/>
+      <line x1="216" y1="130" x2="250" y2="236"/>
+      <line x1="296" y1="382" x2="262" y2="276"/>
     </g>
+    <!-- moyeu -->
+    <circle cx="256" cy="256" r="22" fill="#c9c9c9"/>
+    <circle cx="256" cy="256" r="10" fill="#8a8a8a"/>
+    <circle cx="256" cy="256" r="4" fill="#555"/>
   </g>
 
-  <!-- carotte en travers : corps orange + feuilles vert clair -->
-  <g transform="rotate(-38 256 256)">
-    <polygon points="196,256 200,286 200,226" fill="#8bc34a"/>
-    <polygon points="204,256 212,290 212,222" fill="#9ccc65"/>
-    <polygon points="216,256 224,296 224,216" fill="#8bc34a"/>
-    <path d="M 224 232 L 224 280 C 350 290, 430 270, 448 256 C 430 242, 350 222, 224 232 Z" fill="#f28c28"/>
+  <!-- CAROTTE RÉALISTE en diagonale -->
+  <g transform="rotate(-32 256 256)">
+    <!-- feuilles frangées -->
+    <g stroke="#7cb342" stroke-width="11" fill="none" stroke-linecap="round">
+      <path d="M 232 256 C 196 244, 176 224, 164 194"/>
+      <path d="M 232 256 C 190 252, 162 240, 140 216"/>
+      <path d="M 232 256 C 194 262, 168 274, 150 300"/>
+      <path d="M 232 256 C 202 270, 184 290, 174 318"/>
+    </g>
+    <!-- corps : épaule large vers pointe effilée, courbure naturelle -->
+    <path d="M 240 232
+             C 316 222, 388 232, 436 252
+             C 442 254, 442 258, 436 260
+             C 388 280, 316 290, 240 280
+             C 230 278, 226 272, 226 256
+             C 226 240, 230 234, 240 232 Z" fill="#e6762a"/>
+    <!-- stries horizontales -->
+    <g stroke="#c95f1a" stroke-width="5" stroke-linecap="round" fill="none" opacity=".7">
+      <path d="M 262 238 C 266 250, 266 262, 262 274"/>
+      <path d="M 300 236 C 304 248, 304 264, 300 276"/>
+      <path d="M 338 238 C 342 250, 342 262, 338 274"/>
+      <path d="M 376 242 C 379 252, 379 260, 376 270"/>
+    </g>
+    <!-- highlight supérieur -->
+    <path d="M 244 236 C 310 226, 380 234, 424 250 C 380 240, 310 234, 244 240 Z" fill="#f0924a" opacity=".8"/>
   </g>
 </svg>
