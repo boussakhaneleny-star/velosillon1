@@ -364,6 +364,18 @@
     max-width: 90vw;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #btn-report { position: fixed; bottom: 18px; right: 18px; z-index: 40; width: 54px; height: 54px; border-radius: 50%; border: none; cursor: pointer; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; background: var(--accent); color: #fff; box-shadow: 0 4px 14px rgba(0,0,0,.3); }
+  #btn-report:active { transform: scale(.95); }
+  #report-page { display: none; position: fixed; inset: 0; z-index: 50; background: var(--bg); overflow-y: auto; padding: 18px 16px 90px; }
+  #report-page.visible { display: block; }
+  .rep-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .rep-header h2 { margin: 0; font-size: 1.15rem; }
+  .rep-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .rep-nav .ghost { flex: 0 0 auto; }
+  .rep-nav .rep-month { flex: 1; text-align: center; font-weight: 700; font-size: 1rem; }
+  .rep-day { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: .82rem; }
+  .rep-day .date { min-width: 92px; font-weight: 600; }
+  .rep-day .val { color: var(--muted); }
   .list-controls { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
   .list-controls button { font-size: .78rem; padding: 7px 12px; }
   .day-chip {
@@ -607,6 +619,19 @@
 </section>
 </div>
 
+<button id="btn-report" title="Bilan nutritionnel du mois" aria-label="Bilan nutritionnel du mois">📊</button>
+<div id="report-page" role="dialog" aria-modal="true" aria-label="Bilan nutritionnel du mois">
+  <div class="rep-header">
+    <button class="ghost" id="btn-report-close">← Retour</button>
+    <h2>📊 Bilan nutritionnel</h2>
+  </div>
+  <div class="rep-nav">
+    <button class="ghost" id="btn-month-prev">◀</button>
+    <span class="rep-month" id="rep-month"></span>
+    <button class="ghost" id="btn-month-next">▶</button>
+  </div>
+  <div id="rep-content"></div>
+</div>
 <div class="toast" id="toast"></div>
 <footer>VeloSillon — vos données restent sur votre appareil (stockage local). Fonctionne hors-ligne.</footer>
 
@@ -1147,8 +1172,8 @@ function renderBio() {
       '<div class="bio-need"><div class="v">' + r.fat + ' g</div><div class="l">lipides / jour</div></div>' +
       '<div class="bio-need"><div class="v">' + r.water + ' L</div><div class="l">eau / jour (incl. pédalage)</div></div>' +
     '</div>' +
-    '<p class="ride-detail">U0001F9EE ' + r.bmr.toLocaleString("fr-FR") + ' kcal métabolisme de base × 1,4 vie quotidienne = ' + r.dailyLife.toLocaleString("fr-FR") + ' kcal<br>' +
-    'U0001F6B4 + ' + r.riding.toLocaleString("fr-FR") + ' kcal de pédalage (' + ridePct + ' % du total' + (state.ride && state.ride.km ? ' — ' + state.ride.km + ' km / ' + (state.ride.dplus || 0) + ' m D+' : ' — estimation par défaut') + ')</p>';
+    '<p class="ride-detail">🧮 ' + r.bmr.toLocaleString("fr-FR") + ' kcal métabolisme de base × 1,4 vie quotidienne = ' + r.dailyLife.toLocaleString("fr-FR") + ' kcal<br>' +
+    '🚴 + ' + r.riding.toLocaleString("fr-FR") + ' kcal de pédalage (' + ridePct + ' % du total' + (state.ride && state.ride.km ? ' — ' + state.ride.km + ' km / ' + (state.ride.dplus || 0) + ' m D+' : ' — estimation par défaut') + ')</p>';
   }
   renderKcal();
 }
@@ -1258,7 +1283,7 @@ const NUTRI_FAMILIES = [
 // ---------- État ----------
 const LS_KEY = "velosillon.v2";
 const LS_KEY_V1 = "velosillon.v1";
-let state = { step: 1, country: "France", region: "Bretagne", activeCat: "Féculents", canCook: true, bio: { sex: "h", age: null, weight: null, height: null }, ride: { km: null, dplus: null }, items: [] };
+let state = { step: 1, country: "France", region: "Bretagne", activeCat: "Féculents", canCook: true, bio: { sex: "h", age: null, weight: null, height: null }, ride: { km: null, dplus: null }, items: [], history: {} };
 
 function load() {
   try {
@@ -1293,6 +1318,7 @@ function load() {
       }
     }
   } catch (e) { /* stockage indisponible : session en mémoire */ }
+  if (!state.history || typeof state.history !== "object") state.history = {};
   if (!COUNTRIES.find(c => c.name === state.country)) state.country = COUNTRIES[0].name;
   const c = COUNTRIES.find(x => x.name === state.country);
   if (!c.regions.find(r => r.name === state.region)) state.region = c.regions[0].name;
@@ -1647,7 +1673,9 @@ function renderList() {
   ul.innerHTML = html;
   ul.querySelectorAll("li[data-i]").forEach(li => {  const i = +li.dataset.i;
     li.querySelector(".check").addEventListener("change", e => {
-      state.items[i].done = e.target.checked; save(); renderList(); renderCart();
+      state.items[i].done = e.target.checked;
+      if (e.target.checked) archiveDay();
+      save(); renderList(); renderCart();
     });
     li.querySelector("[data-del]").addEventListener("click", () => {
       state.items.splice(i, 1); save(); renderList(); renderCart(); renderSuggestions();
@@ -1799,6 +1827,99 @@ function coverageBlock(totalKcal) {
 
 function renderBars() {}
 
+// ---------- Bilan nutritionnel : date, archive quotidienne, rapport mensuel ----------
+function todayKey(d) { const x = d || new Date(); return x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0"); }
+function dayNutrition(items) {
+  const m = { kcal: 0, p: 0, c: 0, f: 0, micro: [0, 0, 0, 0, 0] };
+  for (const it of items) {
+    const u = unitOf(it.name);
+    const k = KCAL[it.name] !== undefined ? KCAL[it.name] : 150;
+    const mac = MACRO[it.name] || [15, 15, 5];
+    m.kcal += k * u.kf * it.qty;
+    m.p += mac[0] * u.kf * it.qty;
+    m.c += mac[1] * u.kf * it.qty;
+    m.f += mac[2] * u.kf * it.qty;
+    const w = weightOf(it.name);
+    const factor = u.label === "g" ? it.qty / 100 : ((w || 100) * (u.label === "kg" ? 10 : u.label === "L" ? 10 : 1)) * it.qty / 100;
+    const mi = microOf(it.name);
+    for (let i = 0; i < 5; i++) m.micro[i] += mi[i] * factor;
+  }
+  m.kcal = Math.round(m.kcal); m.p = Math.round(m.p); m.c = Math.round(m.c); m.f = Math.round(m.f);
+  return m;
+}
+function archiveDay() {
+  const done = state.items.filter(it => it.done);
+  if (!done.length) return;
+  const key = todayKey();
+  const prev = state.history[key] || [];
+  const names = new Set(prev.map(x => x.name + "|" + x.qty));
+  const merged = prev.concat(done.filter(it => !names.has(it.name + "|" + it.qty)).map(it => ({ name: it.name, qty: it.qty })));
+  state.history[key] = merged;
+}
+let repMonthOffset = 0;
+function monthDays() {
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getMonth() + repMonthOffset, 1);
+  const y = d.getFullYear(), m = d.getMonth();
+  const days = [];
+  const n = new Date(y, m + 1, 0).getDate();
+  for (let i = 1; i <= n; i++) {
+    const key = y + "-" + String(m + 1).padStart(2, "0") + "-" + String(i).padStart(2, "0");
+    days.push({ key, day: i, items: state.history[key] || null });
+  }
+  return { y, m, days };
+}
+const REP_MICRO = [["Vitamine C", "mg"], ["Fer", "mg"], ["Calcium", "mg"], ["Magn\u00e9sium", "mg"], ["Fibres", "g"]];
+function renderReport() {
+  const { y, m, days } = monthDays();
+  const needs = bioNeeds();
+  const monthNames = ["janvier", "f\u00e9vrier", "mars", "avril", "mai", "juin", "juillet", "ao\u00fbt", "septembre", "octobre", "novembre", "d\u00e9cembre"];
+  document.getElementById("rep-month").textContent = monthNames[m] + " " + y;
+  const content = document.getElementById("rep-content");
+  const logged = days.filter(d => d.items);
+  if (!logged.length) { content.innerHTML = '<p class="empty">Aucune journ\u00e9e enregistr\u00e9e pour ce mois. Cochez vos articles consomm\u00e9s dans la liste de courses : chaque journ\u00e9e est archiv\u00e9e automatiquement avec sa date.</p>'; return; }
+  const tot = { kcal: 0, p: 0, c: 0, f: 0, micro: [0, 0, 0, 0, 0] };
+  const dayRows = [];
+  for (const d of logged) {
+    const n = dayNutrition(d.items);
+    tot.kcal += n.kcal; tot.p += n.p; tot.c += n.c; tot.f += n.f;
+    for (let i = 0; i < 5; i++) tot.micro[i] += n.micro[i];
+    dayRows.push('<div class="rep-day"><span class="date">' + String(d.day).padStart(2, "0") + "/" + String(m + 1).padStart(2, "0") + '</span><span class="val">' + d.items.length + ' article' + (d.items.length > 1 ? "s" : "") + ' \u00b7 ' + n.kcal.toLocaleString("fr-FR") + ' kcal \u00b7 ' + n.p + ' g prot.</span></div>');
+  }
+  const nDays = logged.length;
+  const avg = { kcal: Math.round(tot.kcal / nDays), p: Math.round(tot.p / nDays), c: Math.round(tot.c / nDays), f: Math.round(tot.f / nDays), micro: tot.micro.map(v => v / nDays) };
+  const dailyNeeds = needs || { kcal: 3500, protein: 105, carbs: 480, fat: 97 };
+  const rows = [
+    { label: "\u26a1 Calories", unit: "kcal", val: avg.kcal, need: dailyNeeds.kcal },
+    { label: "🥪 Prot\u00e9ines", unit: "g", val: avg.p, need: dailyNeeds.protein },
+    { label: "🍟 Glucides", unit: "g", val: avg.c, need: dailyNeeds.carbs },
+    { label: "🧈 Lipides", unit: "g", val: avg.f, need: dailyNeeds.fat },
+  ];
+  for (let i = 0; i < 5; i++) rows.push({ label: REP_MICRO[i][0], unit: REP_MICRO[i][1], val: avg.micro[i], need: MICRO_NEEDS[i][0] });
+  const deficits = rows.filter(r => r.val < r.need * 0.75);
+  let htmlOut = '<p style="font-size:.82rem;color:var(--muted);margin:4px 0 12px">' + nDays + ' journ\u00e9e' + (nDays > 1 ? "s" : "") + ' enregistr\u00e9e' + (nDays > 1 ? "s" : "") + ' \u00b7 moyennes par jour, compar\u00e9es \u00e0 vos besoins (biom\u00e9trie + effort).</p>';
+  if (deficits.length) {
+    htmlOut += '<div class="card" style="border-left:4px solid #c05621"><strong>\u26a0\ufe0f Carences d\u00e9tect\u00e9es</strong><p style="font-size:.8rem;margin-top:6px">' + deficits.map(r => r.label + " (" + Math.round(r.val).toLocaleString("fr-FR") + " / " + Math.round(r.need).toLocaleString("fr-FR") + " " + r.unit + ")").join(" \u00b7 ") + '</p></div>';
+  } else {
+    htmlOut += '<div class="card" style="border-left:4px solid var(--accent)"><strong>\u2705 Aucune carence d\u00e9tect\u00e9e</strong><p style="font-size:.8rem;margin-top:6px">Vos apports couvrent au moins 75 % des besoins sur toutes les cat\u00e9gories suivies.</p></div>';
+  }
+  htmlOut += '<div class="card"><h3 style="margin-top:0">Couverture moyenne par jour</h3>';
+  for (const r of rows) {
+    const pct = Math.min(150, Math.round(r.val / r.need * 100));
+    const color = pct >= 100 ? "#2f7d4f" : pct >= 75 ? "#d69e2e" : "#c05621";
+    htmlOut += '<div class="macro-row"><div class="macro-head"><span class="macro-name">' + r.label + '</span><span><span class="macro-val">' + (r.val < 10 ? Math.round(r.val * 10) / 10 : Math.round(r.val)).toLocaleString("fr-FR") + ' ' + r.unit + '</span> <span class="macro-kcal">' + pct + ' % du besoin</span></span></div><div class="kcal-cat-bar"><span class="kcal-cat-fill" style="width:' + Math.min(100, pct) + "%;background:" + color + '"></span></div></div>';
+  }
+  htmlOut += '<p class="legend">Besoins journaliers de r\u00e9f\u00e9rence : ' + Math.round(dailyNeeds.kcal).toLocaleString("fr-FR") + ' kcal, ' + Math.round(dailyNeeds.protein) + ' g prot\u00e9ines, ' + Math.round(dailyNeeds.carbs) + ' g glucides, ' + Math.round(dailyNeeds.fat) + ' g lipides' + (needs ? "" : " (valeurs par d\u00e9faut \u2014 remplissez la biom\u00e9trie pour affiner)") + '.</p></div>';
+  htmlOut += '<div class="card"><h3 style="margin-top:0">D\u00e9tail par journ\u00e9e</h3>' + dayRows.join("") + '</div>';
+  content.innerHTML = htmlOut;
+}
+function openReport() { repMonthOffset = 0; renderReport(); document.getElementById("report-page").classList.add("visible"); }
+function closeReport() { document.getElementById("report-page").classList.remove("visible"); }
+document.getElementById("btn-report").addEventListener("click", openReport);
+document.getElementById("btn-report-close").addEventListener("click", closeReport);
+document.getElementById("btn-month-prev").addEventListener("click", () => { repMonthOffset--; renderReport(); });
+document.getElementById("btn-month-next").addEventListener("click", () => { repMonthOffset++; renderReport(); });
+
 // ---------- Actions ----------
 function addItem(name, qty) {
   const u = unitOf(name);
@@ -1893,6 +2014,7 @@ document.getElementById("btn-geo").addEventListener("click", () => {
   }, () => toast("Position refusée — choisissez une zone"), { timeout: 8000 });
 });
 document.getElementById("btn-reset").addEventListener("click", () => {
+  archiveDay();
   if (!state.items.length) return;
   if (confirm("Vider toute la liste ?")) {
     state.items = []; save(); renderList();
@@ -1917,6 +2039,7 @@ document.getElementById("btn-export").addEventListener("click", () => {
   toast("📤 Liste exportée");
 });
 document.getElementById("btn-remove-done").addEventListener("click", () => {
+  archiveDay();
   const n = state.items.filter(it => it.done).length;
   if (!n || !confirm(`Retirer les ${n} article${n > 1 ? "s" : ""} coch${n > 1 ? "és" : "é"} de la liste ?`)) return;
   state.items = state.items.filter(it => !it.done); save(); renderList(); renderSuggestions();
