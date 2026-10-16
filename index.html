@@ -58,6 +58,8 @@
   }
   .progress .dot.active { background: var(--accent); }
   .progress .dot.done { background: var(--accent); opacity: .5; }
+  .progress .dot.result.active { background: var(--accent-2); }
+  .progress .dot.result.done { background: var(--accent-2); opacity: .5; }
   .step { display: none; }
   .step.visible { display: block; }
   .step-nav {
@@ -1928,7 +1930,7 @@ function showStep(n) {
   document.querySelectorAll(".step").forEach(s => s.classList.toggle("visible", +s.dataset.step === n));
   const dots = document.getElementById("progress");
   dots.innerHTML = Array.from({ length: TOTAL_STEPS }, (_, i) =>
-    '<span class="dot ' + (i + 1 < n ? 'done' : i + 1 === n ? 'active' : '') + '"></span>'
+    '<span class="dot ' + (i + 1 < n ? 'done' : i + 1 === n ? 'active' : '') + ' ' + (i + 1 <= 3 ? 'info' : 'result') + '"></span>'
   ).join("");
   window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
   save();
