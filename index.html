@@ -2088,6 +2088,7 @@ function showStep(n) {
   dots.innerHTML = Array.from({ length: TOTAL_STEPS }, (_, i) =>
     '<span class="dot ' + (i + 1 < n ? 'done' : i + 1 === n ? 'active' : '') + ' ' + (i + 1 <= 3 ? 'info' : 'result') + '"></span>'
   ).join("");
+  if (n === 5) { renderKcal(); renderMicro(); }
   window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
   save();
 }
@@ -2121,7 +2122,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 }
 applyTheme();
 showStep(1);
-renderZones(); renderTabs(); renderSubcats(); renderCookToggle(); renderSuggestions(); renderBio(); renderRide(); renderList(); renderCart();
+renderZones(); renderTabs(); renderSubcats(); renderCookToggle(); renderSuggestions(); renderBio(); renderRide(); renderList(); renderCart(); renderKcal(); renderMicro();
 </script>
 </body>
 </html>
