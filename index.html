@@ -394,11 +394,7 @@
   .rep-bar-tip { font-size: 12px; font-weight: 700; fill: var(--muted); }
   .rep-axis { stroke: var(--border); stroke-width: 1; }
   .rep-need-line { stroke: #c05621; stroke-width: 1.5; stroke-dasharray: 4 3; }
-  .rep-day-cell { display: flex; align-items: baseline; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: .8rem; flex-wrap: wrap; }
-  .rep-day-cell .d { min-width: 56px; font-weight: 700; }
-  .rep-day-cell .n { flex: 1; min-width: 140px; color: var(--muted); }
-  .rep-mini-bar { flex: 2; min-width: 120px; height: 10px; background: var(--border); border-radius: 5px; overflow: hidden; }
-  .rep-mini-bar > span { display: block; height: 100%; border-radius: 5px; }
+
   .list-controls { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
   .list-controls button { font-size: .78rem; padding: 7px 12px; }
   .day-chip {
@@ -1965,14 +1961,7 @@ function renderReport() {
     htmlOut += '<div class="macro-row"><div class="macro-head"><span class="macro-name">' + r.label + '</span><span><span class="macro-val">' + (r.val < 10 ? Math.round(r.val * 10) / 10 : Math.round(r.val)).toLocaleString("fr-FR") + ' ' + r.unit + '</span> <span class="macro-kcal">' + pct + ' % du besoin</span></span></div><div class="kcal-cat-bar"><span class="kcal-cat-fill" style="width:' + Math.min(100, pct) + "%;background:" + color + '"></span></div></div>';
   }
   htmlOut += '<p class="legend">Besoins journaliers de r\u00e9f\u00e9rence : ' + Math.round(dailyNeeds.kcal).toLocaleString("fr-FR") + ' kcal, ' + Math.round(dailyNeeds.protein) + ' g prot\u00e9ines, ' + Math.round(dailyNeeds.carbs) + ' g glucides, ' + Math.round(dailyNeeds.fat) + ' g lipides' + (needs ? "" : " (valeurs par d\u00e9faut \u2014 remplissez la biom\u00e9trie pour affiner)") + '.</p></div>';
-  htmlOut += '<div class="card"><h3 style="margin-top:0">🗓\uFE0F D\u00e9tail par journ\u00e9e</h3>';
-  for (const d of logged) {
-    const pct = Math.min(100, Math.round(d.n.kcal / dailyNeeds.kcal * 100));
-    const color = pct >= 100 ? "#2f7d4f" : pct >= 75 ? "#d69e2e" : "#c05621";
-    htmlOut += '<div class="rep-day-cell"><span class="d">' + String(d.day).padStart(2, "0") + "/" + String(m + 1).padStart(2, "0") + '</span><span class="n">' + d.items.length + ' article' + (d.items.length > 1 ? "s" : "") + ' \u00b7 ' + d.n.kcal.toLocaleString("fr-FR") + ' kcal \u00b7 ' + d.n.p + ' g prot. \u00b7 ' + d.n.c + ' g gluc.</span><span class="rep-mini-bar"><span style="width:' + pct + '%;background:' + color + '"></span></span><span style="min-width:44px;text-align:right;font-weight:700;color:' + color + '">' + pct + ' %</span></div>';
-  }
-  htmlOut += '</div>';
-  htmlOut += '<div class="card" style="border-left:4px solid var(--muted)"><h3 style="margin-top:0">\u2139\uFE0F Note \u2014 des estimations, pas des mesures</h3><p style="font-size:.78rem;color:var(--muted);margin:4px 0 8px">Ces chiffres restent des <strong>estimations indicatives</strong> \u00e0 prendre comme des ordres de grandeur, pas au pied de la lettre :</p><ul style="font-size:.78rem;color:var(--muted);margin:0;padding-left:18px"><li>Les quantit\u00e9s s\u00e9lectionn\u00e9es sont certainement un peu diff\u00e9rentes de la r\u00e9alit\u00e9 (portions approximatives, aliments inconnus estim\u00e9s par d\u00e9faut).</li><li>Toutes les courses coch\u00e9es dans la journ\u00e9e ne sont pas forc\u00e9ment consomm\u00e9es ce jour-l\u00e0 \u2014 certaines alimentent les jours suivants.</li></ul><p style="font-size:.78rem;color:var(--muted);margin:8px 0 0">Utilisez ce bilan pour rep\u00e9rer des <strong>tendances</strong> (une carence qui dure plusieurs jours m\u00e9rite attention, un chiffre isol\u00e9 non).</p></div>';
+    htmlOut += '<div class="card" style="border-left:4px solid var(--muted)"><h3 style="margin-top:0">\u2139\uFE0F Note \u2014 des estimations, pas des mesures</h3><p style="font-size:.78rem;color:var(--muted);margin:4px 0 8px">Ces chiffres restent des <strong>estimations indicatives</strong> \u00e0 prendre comme des ordres de grandeur, pas au pied de la lettre :</p><ul style="font-size:.78rem;color:var(--muted);margin:0;padding-left:18px"><li>Les quantit\u00e9s s\u00e9lectionn\u00e9es sont certainement un peu diff\u00e9rentes de la r\u00e9alit\u00e9 (portions approximatives, aliments inconnus estim\u00e9s par d\u00e9faut).</li><li>Toutes les courses coch\u00e9es dans la journ\u00e9e ne sont pas forc\u00e9ment consomm\u00e9es ce jour-l\u00e0 \u2014 certaines alimentent les jours suivants.</li></ul><p style="font-size:.78rem;color:var(--muted);margin:8px 0 0">Utilisez ce bilan pour rep\u00e9rer des <strong>tendances</strong> (une carence qui dure plusieurs jours m\u00e9rite attention, un chiffre isol\u00e9 non).</p></div>';
   content.innerHTML = htmlOut;
   const prev = document.getElementById("btn-nut-prev");
   const next = document.getElementById("btn-nut-next");
