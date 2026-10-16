@@ -1925,7 +1925,7 @@ const TOTAL_STEPS = 5;
 function showStep(n) {
   n = Math.max(1, Math.min(TOTAL_STEPS, n));
   state.step = n;
-  document.querySelectorAll(".step").forEach(s => s.classList.toggle("visible", +s.dataset.step === n));  document.getElementById("btn-cart").style.display = n === 4 ? "" : "none";
+  document.querySelectorAll(".step").forEach(s => s.classList.toggle("visible", +s.dataset.step === n));
   const dots = document.getElementById("progress");
   dots.innerHTML = Array.from({ length: TOTAL_STEPS }, (_, i) =>
     '<span class="dot ' + (i + 1 < n ? 'done' : i + 1 === n ? 'active' : '') + '"></span>'
