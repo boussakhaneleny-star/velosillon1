@@ -1882,25 +1882,35 @@ function monthDays() {
   return { y, m, days };
 }
 const REP_MICRO = [["Vitamine C", "mg"], ["Fer", "mg"], ["Calcium", "mg"], ["Magn\u00e9sium", "mg"], ["Fibres", "g"]];
-function svgMonthlyKcal(logged, m, needKcal) {
+function svgMonthlyNutrient(logged, m, getVal, need, unit, label) {
   const W = 640, H = 180, padL = 8, padB = 18, padT = 8;
   const n = logged.length;
-  const maxV = Math.max(needKcal * 1.15, ...logged.map(d => d.n.kcal));
+  const vals = logged.map(d => getVal(d));
+  const maxV = Math.max(need * 1.15, ...vals);
   const innerW = W - padL * 2, innerH = H - padB - padT;
   const bw = Math.min(26, innerW / n - 6);
   let bars = "";
   logged.forEach((d, idx) => {
+    const v = vals[idx];
     const x = padL + (idx + 0.5) * (innerW / n) - bw / 2;
-    const h = Math.max(2, d.n.kcal / maxV * innerH);
+    const h = Math.max(2, v / maxV * innerH);
     const y = H - padB - h;
-    const color = d.n.kcal >= needKcal ? "#2f7d4f" : d.n.kcal >= needKcal * 0.75 ? "#d69e2e" : "#c05621";
-    bars += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="2.5" fill="' + color + '"><title>' + String(d.day).padStart(2, "0") + "/" + String(m + 1).padStart(2, "0") + " : " + d.n.kcal.toLocaleString("fr-FR") + ' kcal</title></rect>';
+    const color = v >= need ? "#2f7d4f" : v >= need * 0.75 ? "#d69e2e" : "#c05621";
+    bars += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="2.5" fill="' + color + '"><title>' + String(d.day).padStart(2, "0") + "/" + String(m + 1).padStart(2, "0") + " : " + (v < 10 ? Math.round(v * 10) / 10 : Math.round(v)).toLocaleString("fr-FR") + " " + unit + '</title></rect>';
     bars += '<text class="rep-bar-tip" x="' + (x + bw / 2).toFixed(1) + '" y="' + (H - 5) + '" text-anchor="middle">' + d.day + '</text>';
   });
-  const needY = H - padB - (needKcal / maxV * innerH);
-  const line = '<line class="rep-need-line" x1="' + padL + '" y1="' + needY.toFixed(1) + '" x2="' + (W - padL) + '" y2="' + needY.toFixed(1) + '"><title> besoin : ' + Math.round(needKcal).toLocaleString("fr-FR") + ' kcal</title></line>';
-  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Calories par jour">' + bars + line + '</svg>';
+  const needY = H - padB - (need / maxV * innerH);
+  const line = '<line class="rep-need-line" x1="' + padL + '" y1="' + needY.toFixed(1) + '" x2="' + (W - padL) + '" y2="' + needY.toFixed(1) + '"><title> besoin : ' + Math.round(need).toLocaleString("fr-FR") + " " + unit + '</title></line>';
+  return '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + label + ' par jour">' + bars + line + '</svg>';
 }
+const REPORT_NUTRIENTS = [
+  { key: "kcal", label: "\u26a1 Calories", unit: "kcal", get: d => d.n.kcal, need: nd => nd.kcal },
+  { key: "p", label: "🥪 Prot\u00e9ines", unit: "g", get: d => d.n.p, need: nd => nd.protein },
+  { key: "c", label: "🍟 Glucides", unit: "g", get: d => d.n.c, need: nd => nd.carbs },
+  { key: "f", label: "🧈 Lipides", unit: "g", get: d => d.n.f, need: nd => nd.fat },
+];
+for (let i = 0; i < 5; i++) REPORT_NUTRIENTS.push({ key: "micro" + i, label: REP_MICRO[i][0], unit: REP_MICRO[i][1], get: d => d.n.micro[i], need: () => MICRO_NEEDS[i][0] });
+let repNutrientIdx = 0;
 function renderReport() {
   const { y, m, days } = monthDays();
   const needs = bioNeeds();
@@ -1931,7 +1941,9 @@ function renderReport() {
   } else {
     htmlOut += '<div class="card" style="border-left:4px solid var(--accent)"><strong>\u2705 Aucune carence d\u00e9tect\u00e9e</strong><p style="font-size:.8rem;margin-top:6px">Vos apports couvrent au moins 75 % des besoins sur toutes les cat\u00e9gories suivies.</p></div>';
   }
-  htmlOut += '<div class="card"><h3 style="margin-top:0">📊 Calories par jour</h3><div class="rep-chart">' + svgMonthlyKcal(logged, m, dailyNeeds.kcal) + '</div><p class="legend">Barres vertes \u2265 besoin \u00b7 jaunes \u2265 75 % \u00b7 orange en carence. Ligne pointill\u00e9e = besoin de ' + Math.round(dailyNeeds.kcal).toLocaleString("fr-FR") + ' kcal/jour.</p></div>';
+  const nut = REPORT_NUTRIENTS[repNutrientIdx];
+  const nutNeed = nut.need(dailyNeeds);
+  htmlOut += '<div class="card"><h3 style="margin-top:0">📊 ' + nut.label + ' par jour</h3><div class="rep-nav" style="margin-bottom:4px"><button class="ghost" id="btn-nut-prev">\u25c0</button><span class="rep-month" id="rep-nut-name" style="font-size:.85rem">' + (repNutrientIdx + 1) + " / " + REPORT_NUTRIENTS.length + '</span><button class="ghost" id="btn-nut-next">\u25b6</button></div><div class="rep-chart">' + svgMonthlyNutrient(logged, m, nut.get, nutNeed, nut.unit, nut.label) + '</div><p class="legend">Barres vertes \u2265 besoin \u00b7 jaunes \u2265 75 % \u00b7 orange en carence. Ligne pointill\u00e9e = besoin de ' + Math.round(nutNeed).toLocaleString("fr-FR") + " " + nut.unit + '/jour.</p></div>';
   htmlOut += '<div class="card"><h3 style="margin-top:0">Couverture moyenne par jour</h3>';
   for (const r of rows) {
     const pct = Math.round(r.val / r.need * 100);
@@ -1948,6 +1960,10 @@ function renderReport() {
   htmlOut += '</div>';
   htmlOut += '<div class="card" style="border-left:4px solid var(--muted)"><h3 style="margin-top:0">\u2139\uFE0F Note \u2014 des estimations, pas des mesures</h3><p style="font-size:.78rem;color:var(--muted);margin:4px 0 8px">Ces chiffres restent des <strong>estimations indicatives</strong> \u00e0 prendre comme des ordres de grandeur, pas au pied de la lettre :</p><ul style="font-size:.78rem;color:var(--muted);margin:0;padding-left:18px"><li>Les quantit\u00e9s s\u00e9lectionn\u00e9es sont certainement un peu diff\u00e9rentes de la r\u00e9alit\u00e9 (portions approximatives, aliments inconnus estim\u00e9s par d\u00e9faut).</li><li>Toutes les courses coch\u00e9es dans la journ\u00e9e ne sont pas forc\u00e9ment consomm\u00e9es ce jour-l\u00e0 \u2014 certaines alimentent les jours suivants.</li></ul><p style="font-size:.78rem;color:var(--muted);margin:8px 0 0">Utilisez ce bilan pour rep\u00e9rer des <strong>tendances</strong> (une carence qui dure plusieurs jours m\u00e9rite attention, un chiffre isol\u00e9 non).</p></div>';
   content.innerHTML = htmlOut;
+  const prev = document.getElementById("btn-nut-prev");
+  const next = document.getElementById("btn-nut-next");
+  if (prev) prev.addEventListener("click", () => { repNutrientIdx = (repNutrientIdx - 1 + REPORT_NUTRIENTS.length) % REPORT_NUTRIENTS.length; renderReport(); });
+  if (next) next.addEventListener("click", () => { repNutrientIdx = (repNutrientIdx + 1) % REPORT_NUTRIENTS.length; renderReport(); });
 }function openReport() { repMonthOffset = 0; renderReport(); document.getElementById("report-page").classList.add("visible"); }
 function closeReport() { document.getElementById("report-page").classList.remove("visible"); }
 document.getElementById("btn-report").addEventListener("click", openReport);
