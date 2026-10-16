@@ -51,7 +51,7 @@
     padding: 2px 12px; font-size: .7rem;
   }
   .wrap { max-width: 720px; margin: 0 auto; padding: 18px 16px; }
-  .progress { display: flex; gap: 6px; margin-bottom: 14px; }
+  header .progress { display: flex; gap: 6px; margin: 10px 0 0; }
   .progress .dot {
     flex: 1; height: 6px; border-radius: 3px;
     background: var(--border); transition: background .15s ease;
@@ -504,10 +504,10 @@
   <h1>🚴 VeloSillon — Courses du voyage</h1>
   <p>Liste de courses par zone géographique, pour une alimentation variée et riche.</p>
   <span class="badge">🌍 40+ pays d'Europe · 💾 100% hors-ligne</span>
+<div class="progress" id="progress"></div>
 </header>
 
 <div class="wrap">
-<div class="progress" id="progress"></div>
 
 <section class="step" data-step="1" id="step-1">
 <div class="card">
