@@ -364,8 +364,8 @@
     max-width: 90vw;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  .step-nav .nav-report { flex: 0 0 auto; width: 42px; height: 42px; border-radius: 50%; border: none; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; background: var(--accent); color: #fff; }
-  .step-nav .nav-report:active { transform: scale(.95); }
+  #btn-report { position: fixed; bottom: calc(92px + env(safe-area-inset-bottom, 0px)); right: 18px; z-index: 30; width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer; font-size: 1.35rem; display: flex; align-items: center; justify-content: center; background: var(--accent); color: #fff; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+  #btn-report:active { transform: scale(.95); }
   #report-page { display: none; position: fixed; inset: 0; z-index: 50; background: var(--bg); overflow-y: auto; padding: 18px 16px 90px; }
   #report-page.visible { display: block; }
   .rep-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
@@ -531,7 +531,7 @@
   </div>
 <div class="step-nav">
 <span></span>
-<span class="step-count">Étape 1 / 5</span><button class="nav-report" title="Bilan nutritionnel du mois" aria-label="Bilan nutritionnel du mois">📊</button>
+<span class="step-count">Étape 1 / 5</span>
 <button data-goto="2">Suivant →</button>
 </div>
 </section>
@@ -551,7 +551,7 @@
   </div>
 <div class="step-nav">
 <button class="ghost" data-goto="1">← Précédent</button>
-<span class="step-count">Étape 2 / 5</span><button class="nav-report" title="Bilan nutritionnel du mois" aria-label="Bilan nutritionnel du mois">📊</button>
+<span class="step-count">Étape 2 / 5</span>
 <button data-goto="3">Suivant →</button>
 </div>
 </section>
@@ -579,7 +579,7 @@
   </div>
 <div class="step-nav">
 <button class="ghost" data-goto="2">← Précédent</button>
-<span class="step-count">Étape 3 / 5</span><button class="nav-report" title="Bilan nutritionnel du mois" aria-label="Bilan nutritionnel du mois">📊</button>
+<span class="step-count">Étape 3 / 5</span>
 <button data-goto="4">Suivant →</button>
 </div>
 </section>
@@ -608,7 +608,7 @@
     </div>
     <p class="empty" id="empty-msg">Aucun article — choisissez une zone et ajoutez des suggestions.</p>
   </div>
-<div class="step-nav"><button class="ghost" data-goto="3">← Précédent</button><span class="step-count">Étape 4 / 5</span><button class="nav-report" title="Bilan nutritionnel du mois" aria-label="Bilan nutritionnel du mois">📊</button><button data-goto="5">Suivant →</button></div></section>
+<div class="step-nav"><button class="ghost" data-goto="3">← Précédent</button><span class="step-count">Étape 4 / 5</span><button data-goto="5">Suivant →</button></div></section>
 <section class="step" data-step="5" id="step-5">
 
 
@@ -625,12 +625,13 @@
   </div>
 <div class="step-nav">
 <button class="ghost" data-goto="4">← Précédent</button>
-<span class="step-count">Étape 5 / 5</span><button class="nav-report" title="Bilan nutritionnel du mois" aria-label="Bilan nutritionnel du mois">📊</button>
+<span class="step-count">Étape 5 / 5</span>
 
 </div>
 </section>
 </div>
 
+<button id="btn-report" title="Bilan nutritionnel du mois" aria-label="Bilan nutritionnel du mois">📊</button>
 <div id="report-page" role="dialog" aria-modal="true" aria-label="Bilan nutritionnel du mois">
   <div class="rep-header">
     <button class="ghost" id="btn-report-close">← Retour</button>
@@ -1948,7 +1949,7 @@ function renderReport() {
   content.innerHTML = htmlOut;
 }function openReport() { repMonthOffset = 0; renderReport(); document.getElementById("report-page").classList.add("visible"); }
 function closeReport() { document.getElementById("report-page").classList.remove("visible"); }
-document.querySelectorAll(".nav-report").forEach(b => b.addEventListener("click", openReport));
+document.getElementById("btn-report").addEventListener("click", openReport);
 document.getElementById("btn-report-close").addEventListener("click", closeReport);
 document.getElementById("btn-month-prev").addEventListener("click", () => { repMonthOffset--; renderReport(); });
 document.getElementById("btn-month-next").addEventListener("click", () => { repMonthOffset++; renderReport(); });
