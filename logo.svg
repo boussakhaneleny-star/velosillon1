@@ -1,53 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- COUCHE 1 : fond rond uni vert -->
+  <!-- fond rond vert uni -->
   <circle cx="256" cy="256" r="256" fill="#2f7d4f"/>
 
-  <!-- COUCHE 2 : chemin horizontal, clairement SOUS les objets -->
-  <g>
-    <rect x="64" y="352" width="384" height="20" rx="10" fill="#f4efe4"/>
-    <circle cx="128" cy="362" r="5" fill="#2f7d4f"/>
-    <circle cx="192" cy="362" r="5" fill="#2f7d4f"/>
-    <circle cx="256" cy="362" r="5" fill="#2f7d4f"/>
-    <circle cx="320" cy="362" r="5" fill="#2f7d4f"/>
-    <circle cx="384" cy="362" r="5" fill="#2f7d4f"/>
+  <!-- roue de vélo : cercle + rayons -->
+  <g stroke="#ffffff" fill="none">
+    <circle cx="256" cy="256" r="170" stroke-width="22"/>
+    <circle cx="256" cy="256" r="26" stroke-width="16"/>
+    <g stroke-width="10">
+      <line x1="256" y1="105" x2="256" y2="235"/>
+      <line x1="256" y1="277" x2="256" y2="407"/>
+      <line x1="105" y1="256" x2="235" y2="256"/>
+      <line x1="277" y1="256" x2="407" y2="256"/>
+      <line x1="149" y1="149" x2="241" y2="241"/>
+      <line x1="271" y1="271" x2="363" y2="363"/>
+      <line x1="363" y1="149" x2="271" y2="241"/>
+      <line x1="241" y1="271" x2="149" y2="363"/>
+    </g>
   </g>
 
-  <!-- COUCHE 3 : vélo SOUS le food-truck, côte à côte, SANS chevauchement -->
-  <g stroke="#ffffff" stroke-width="18" fill="none" stroke-linecap="round">
-    <!-- roue avant -->
-    <circle cx="150" cy="260" r="52"/>
-    <!-- cadre -->
-    <path d="M 150 260 L 210 190 L 290 190 L 290 260"/>
-    <path d="M 150 260 L 230 260"/>
-    <path d="M 210 190 L 230 260"/>
-  </g>
-  <circle cx="150" cy="260" r="10" fill="#ffffff"/>
-  <circle cx="290" cy="260" r="10" fill="#ffffff"/>
-  <!-- selle -->
-  <path d="M 200 170 L 235 170" stroke="#ffffff" stroke-width="14" stroke-linecap="round"/>
-  <!-- guidon -->
-  <path d="M 290 190 L 310 160" stroke="#ffffff" stroke-width="14" stroke-linecap="round"/>
-  <path d="M 295 152 L 325 152" stroke="#ffffff" stroke-width="14" stroke-linecap="round"/>
-
-  <!-- COUCHE 4 : food-truck à droite du vélo, SANS chevauchement -->
-  <g>
-    <!-- caisse du camion -->
-    <rect x="352" y="192" width="130" height="88" rx="12" fill="#f4efe4"/>
-    <!-- pare-bris / cabine -->
-    <path d="M 352 280 L 352 232 L 378 232 L 392 210 L 470 210 L 470 280 Z" fill="#f4efe4"/>
-    <rect x="354" y="234" width="22" height="22" rx="4" fill="#2f7d4f"/>
-    <!-- service window -->
-    <rect x="402" y="216" width="62" height="12" rx="6" fill="#2f7d4f"/>
-    <!-- roues camion -->
-    <circle cx="382" cy="292" r="22" fill="#2f7d4f" stroke="#f4efe4" stroke-width="10"/>
-    <circle cx="448" cy="292" r="22" fill="#2f7d4f" stroke="#f4efe4" stroke-width="10"/>
-    <!-- auvent -->
-    <path d="M 396 228 L 396 250 L 470 250 L 470 228" fill="none" stroke="#2f7d4f" stroke-width="10"/>
-  </g>
-
-  <!-- COUCHE 5 : gourde au-dessus, centre, clairement séparée -->
-  <g>
-    <rect x="236" y="96" width="60" height="10" rx="5" fill="#f4efe4"/>
-    <path d="M 236 106 L 236 130 C 236 136, 232 140, 232 148 L 232 152 L 300 152 L 300 148 C 300 140, 296 136, 296 130 L 296 106 Z" fill="#f4efe4"/>
+  <!-- carotte en travers : corps orange + feuilles vert clair -->
+  <g transform="rotate(-38 256 256)">
+    <polygon points="196,256 200,286 200,226" fill="#8bc34a"/>
+    <polygon points="204,256 212,290 212,222" fill="#9ccc65"/>
+    <polygon points="216,256 224,296 224,216" fill="#8bc34a"/>
+    <path d="M 224 232 L 224 280 C 350 290, 430 270, 448 256 C 430 242, 350 222, 224 232 Z" fill="#f28c28"/>
   </g>
 </svg>
