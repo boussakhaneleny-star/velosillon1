@@ -2139,7 +2139,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   }).catch(() => {});
 }
 applyTheme();
-showStep(1);
+showStep(Math.max(1, Math.min(TOTAL_STEPS, +state.step || 1)));
 renderZones(); renderTabs(); renderSubcats(); renderCookToggle(); renderSuggestions(); renderBio(); renderRide(); renderList(); renderCart(); renderKcal(); renderMicro();
 </script>
 </body>
