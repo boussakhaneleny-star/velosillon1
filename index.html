@@ -1113,7 +1113,79 @@ const MICRO = {
   "Huile d'olive":[0,0.4,1,1,0],"Huile de colza":[0,0.2,1,1,0],"Huile de tournesol":[0,0.2,1,1,0],"Miel":[0,0.1,5,3,0],"Miels de montagne":[0,0.1,5,3,0],"Miel de montagne":[0,0.1,5,3,0],"Beurre de cacahuète":[0,1.9,43,154,6],"Sésame / tahini":[0,4.6,425,95,9],"Graines de chia":[0,7.7,631,335,34],"Chocolat noir (>70%)":[0,11.9,73,228,11],"Confiture / marmelade":[2,0.2,20,7,1],"Aïoli / mayonnaise":[0,0.2,20,3,0],"Tapenade":[0,0.6,60,20,3],"Pesto":[2,1.2,180,40,2],"Moutarde":[0,1.5,63,48,3],"Paprika (épices)":[0,1.4,36,19,0],"Safran / épices":[0,3,60,65,0],
 };
 const MICRO_FALLBACK = { "Féculents":[0,1.5,20,40,4], "Protéines":[0,1,30,25,0], "Légumes":[20,0.5,30,15,2], "Fruits":[20,0.2,20,10,2], "Produits laitiers":[0,0.1,100,10,0], "Matières grasses":[0,0.5,50,20,2], "Boissons":[0,0,10,5,0] };
-const MICRO_NEEDS = [ [110, "Vitamine C"], [14, "Fer"], [950, "Calcium"], [400, "Magnésium"], [30, "Fibres"] ];
+const NUTRI_ORDER = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27];
+const NUTRI_DEFS = [
+["Vitamine A","\u00b5g",900],["Vitamine D","\u00b5g",15],["Vitamine E","mg",12],["Vitamine K","\u00b5g",90],
+["Vitamine C","mg",110],["Vitamine B1","mg",1.2],["Vitamine B2","mg",1.6],["Vitamine B3","mg",16],
+["Vitamine B5","mg",6],["Vitamine B6","mg",1.8],["Vitamine B7 (biotine)","\u00b5g",40],["Vitamine B9 (folates)","\u00b5g",400],
+["Vitamine B12","\u00b5g",2.4],["Calcium","mg",950],["Phosphore","mg",700],["Magnésium","mg",400],
+["Potassium","mg",3500],["Sodium","mg",1500],["Chlorure","mg",2300],["Fer","mg",14],["Zinc","mg",12],
+["Cuivre","mg",1.5],["Manganèse","mg",2.3],["Sélénium","\u00b5g",70],["Iode","\u00b5g",150],
+["Chrome","\u00b5g",35],["Molybdène","\u00b5g",75],["Fibres","g",30]
+];
+// 23 nutriments "nouveaux" (hors C, fer, Ca, Mg, fibres déjà dans MICRO) :
+const EXTRA_IDX = [0,1,2,3,5,6,7,8,9,10,11,12,14,16,17,18,20,21,22,23,24,25,26];
+const NUTRI_EXTRA = {
+"Sardines":[5,8,2,2.6,.1,.5,5,1.4,.4,6,10,8,450,380,500,1,.35,.25,.06,53,35,4,12],
+"Maquereau":[12,10,1.6,5,.4,.4,6,1.2,.5,4,12,9,300,340,380,1,.35,.2,.05,45,25,4,10],
+"Thon en conserve":[15,5,1,2,1,.3,12,1,.5,3,15,9,250,320,450,3,.3,.1,.03,80,20,2,8],
+"Saumon":[12,11,2.5,0.5,.4,.4,8,1.5,.6,5,18,4,300,420,380,1,.4,.05,.02,30,20,3,8],
+"Poisson fumé":[10,15,1.5,3,.5,.5,8,1.3,.5,6,12,10,280,600,450,1,.4,.15,.05,35,30,4,12],
+"Saumon fumé":[12,12,2.5,3,.4,.4,8,1.4,.6,5,15,6,300,550,400,1,.4,.08,.03,30,25,4,10],
+"Hareng / maquereau":[12,10,1.6,5,.4,.4,6,1.2,.5,4,12,9,300,340,380,1,.35,.2,.05,45,25,4,10],
+"Œufs":[140,2,1,0.3,.04,.3,1,1.5,.1,20,25,1,180,130,50,125,.6,.03,.02,30,25,1,4],
+"Poulet":[6,0.2,.3,0,.1,.2,7,1,.5,3,4,.3,180,290,25,80,1,0.2,.03,25,8,2,5],
+"Poulet fermier":[6,0.2,.3,0,.1,.2,7,1,.5,3,4,.3,180,290,25,80,1,0.2,.03,25,8,2,5],
+"Lait":[30,1,.1,0,.04,.2,.9,.9,.05,3,5,.5,90,150,15,45,.4,.01,0,2,15,1,3],
+"Yaourt":[25,0.5,.1,0,.03,.2,.9,.9,.05,3,3,.4,85,130,12,45,.5,.01,0,3,15,1,4],
+"Skyr":[10,0.4,.1,0,.03,.2,.6,.7,.04,2,2,.4,120,140,11,45,.6,.01,0,4,15,1,4],
+"Fromage":[200,0.7,.3,2,.03,.4,.2,.3,.1,5,2,1.5,500,350,30,650,3,0.03,.01,15,15,1,5],
+"Pâtes complètes":[0,0,.5,0,.4,.1,4,1,.3,25,7,0,180,250,90,10,1.5,.3,1,40,2,5,25],
+"Riz complet":[0,0,.8,0,.4,.05,4,.7,.3,20,4,0,160,300,40,8,1.5,.3,1.5,25,2,3,25],
+"Pain complet":[0,0,.6,4,.35,.1,4.5,1,.25,40,7,0,200,250,450,5,2,.4,1.8,30,2,5,30],
+"Flocons d'avoine":[0,0,.4,2,.8,.1,1.5,1.2,.2,55,7,0,400,400,15,10,3,.4,4,25,4,10,40],
+"Lentilles":[0,0,.5,0,.9,.2,2.5,1.5,.3,480,1,0,350,680,15,8,2.5,.6,1.3,15,3,10,120],
+"Pois chiches":[1,0,.8,0,.5,.2,2.5,1,.2,400,1,0,320,650,15,10,2.5,.6,1.3,15,3,10,60],
+"Épinards":[470,0,2,480,.06,.2,.9,.3,.2,190,0,0,60,650,80,25,1,.2,.9,2,3,2,10],
+"Chou kale":[500,0,1.5,700,.1,.1,1.5,.3,.3,140,0,0,80,500,30,25,.5,.3,.8,2,3,4,10],
+"Brocoli":[60,0,1.5,100,.06,.1,1,1,.2,110,0,0,100,600,30,30,.5,.05,.2,3,3,2,10],
+"Carottes":[830,0,.7,13,.05,.06,1,.2,.2,20,0,0,70,350,70,25,.3,.1,.2,1,2,3,5],
+"Tomates":[80,0,.6,8,.04,.04,.8,.3,.1,25,0,0,30,250,10,25,.2,.05,.1,1,2,1,4],
+"Poivrons":[160,0,.6,13,.06,.05,1,.3,.2,25,0,0,30,250,10,25,.3,.05,.1,1,2,2,6],
+"Oranges":[10,0,.2,0,.09,.03,.3,.3,.1,30,0,0,25,200,1,25,.1,.03,0,1,2,1,4],
+"Kiwi":[5,0,1.5,40,.03,.03,.5,.3,.1,25,0,0,25,300,5,25,.1,.04,.05,1,1,1,5],
+"Bananes":[4,0,.1,.5,.05,.1,.7,.6,.3,20,0,0,90,360,1,25,.2,.1,.3,1,5,1,8],
+"Pommes de terre":[0,0,.1,2,.1,.03,1.5,.4,.3,25,0,0,80,570,10,10,.4,.2,.2,1,5,3,10],
+"Patate douce":[700,0,.7,2,.1,.1,1.2,.8,.2,15,0,0,80,550,70,25,.3,.2,.3,1,5,3,10],
+"Avocats":[7,0,2,20,.1,.2,1.5,1.3,.3,80,0,0,120,600,15,80,.6,.2,.2,4,3,1,8],
+"Amandes":[0,0,25,0,.2,.8,3,.5,.1,30,0,0,450,700,15,10,3,.9,2,25,4,15,20],
+"Noix":[0,0,3,0,.3,.5,3,.6,.5,40,0,0,350,450,10,5,2,.8,3,20,10,25,15],
+"Noisettes":[0,0,15,0,.3,.2,2,.7,.4,30,0,0,350,600,10,5,2,1,4,15,4,20,15],
+"Champignons de Paris":[0,2,.1,0,.1,.4,4,1.5,.05,20,0,.05,120,350,10,10,.5,.3,.1,15,3,2,8],
+"Chou":[400,0,.4,60,.05,.05,.5,.3,.2,60,0,0,60,300,25,25,.3,.2,.2,1,3,3,8],
+"Graines de chia":[0,0,7,0,.6,.2,3,1,.4,30,0,0,600,600,20,20,3,2,3,35,10,10,20],
+"Chocolat noir (>70%)":[2,0,0.6,0,.03,.1,1,.03,.04,20,0,.3,300,550,20,20,2,.5,1.5,15,10,15,12],
+"Dattes":[0,0,.05,0,.07,.07,1.5,.5,.1,15,0,0,120,650,5,65,.3,.1,.3,2,15,2,10],
+"Miel":[0,0,0,0,.01,.02,.1,.1,.01,2,0,0,60,60,10,4,.2,.02,.01,1,1,0,2],
+};
+const NUTRI_CAT_FALLBACK = {
+"Féculents":[0,0,.5,1,.25,.1,2,.8,.15,30,2,0,120,250,5,30,1,.2,.5,8,2,3,10],
+"Protéines":[30,1,.3,1,.15,.25,5,1,.4,15,5,1.5,200,350,80,100,2.5,.1,.05,25,20,1,5],
+"Légumes":[300,0,.6,60,.06,.08,.7,.3,.15,40,1,0,40,300,20,40,.3,.08,.2,1,2,1,10],
+"Fruits":[40,0,.4,5,.04,.05,.8,.3,.12,20,1,0,25,250,3,20,.2,.07,.1,1,1,1,3],
+"Produits laitiers":[60,.5,.1,2,.05,.2,1,.8,.06,15,3,1,200,150,50,100,.4,.03,.01,8,15,1,3],
+"Matières grasses":[0,0,8,20,0,0,0,.2,.05,2,1,0,5,10,200,300,.3,.1,.1,1,1,0,0],
+"Boissons":[0,0,0,0,0,0,0,0,0,0,0,0,0,10,5,5,0,0,0,0,1,0,1],
+};
+function microOfOld(name){ if (MICRO[name]) return MICRO[name]; const cat = catOf(name); return MICRO_FALLBACK[cat] || [0,0,0,0,0]; }
+function nutriOf(name) {
+  const old5 = microOfOld(name);
+  const extra = NUTRI_EXTRA[name] || NUTRI_CAT_FALLBACK[catOf(name)] || new Array(23).fill(0);
+  const v = new Array(28).fill(0);
+  v[4] = old5[0]; v[19] = old5[1]; v[13] = old5[2]; v[15] = old5[3]; v[27] = old5[4];
+  for (let k = 0; k < 23; k++) v[EXTRA_IDX[k]] = extra[k];
+  return v;
+}
 
 function microOf(name) {
   if (MICRO[name]) return MICRO[name];
@@ -1122,15 +1194,15 @@ function microOf(name) {
 }
 
 function estimateMicro() {
-  const t = [0, 0, 0, 0, 0];
+  const t = new Array(28).fill(0);
   for (const it of state.items) {
     if (it.done) continue;
     const u = unitOf(it.name);
     const w = weightOf(it.name);
     const factor = u.label === "g" ? it.qty / 100
       : ((w || 100) * (u.label === "kg" ? 10 : u.label === "L" ? 10 : 1)) * it.qty / 100;
-    const m = microOf(it.name);
-    for (let i = 0; i < 5; i++) t[i] += m[i] * factor;
+    const v = nutriOf(it.name);
+    for (let i = 0; i < 28; i++) t[i] += v[i] * factor;
   }
   return t;
 }
@@ -1143,24 +1215,19 @@ function renderMicro() {
     return;
   }
   const t = estimateMicro();
-  const rows = [
-    { label: "🥊 Vitamine C", unit: "mg", color: "#d69e2e", role: "immunité, anti-fatigue" },
-    { label: "⚑️ Fer", unit: "mg", color: "#c05621", role: "oxygénation du sang" },
-    { label: "🦵 Calcium", unit: "mg", color: "#2b6cb0", role: "os, contractions musculaires" },
-    { label: "⚡ Magnésium", unit: "mg", color: "#6b46c1", role: "crampes, récupération" },
-    { label: "🍋 Fibres", unit: "g", color: "#2f7d4f", role: "digestion, satiété" },
-  ];
-  box.innerHTML = rows.map((r, i) => {
-    const need = MICRO_NEEDS[i][0];
-    const val = t[i];
-    const pct = Math.round(val / need * 100);
+  const roles = {0:"vision, immunité",1:"os, immunité",2:"antioxydant",3:"coagulation",4:"immunité, anti-fatigue",5:"énergie, nerfs",6:"énergie, peau",7:"énergie, digestion",8:"énergie",9:"métabolisme, muscles",10:"peau, cheveux",11:"cellules, sang",12:"sang, nerfs",13:"os, muscles",14:"os, énergie",15:"crampes, récupération",16:"équilibre hydrique, muscles",17:"équilibre hydrique (transpiration)",18:"digestion, équilibre hydrique",19:"oxygénation du sang",20:"immunité, cicatrisation",21:"fer, pigmentation",22:"os, métabolisme",23:"antioxydant, thyroïde",24:"thyroïde",25:"glycémie",26:"acides aminés",27:"digestion, satiété"};
+  const rows = [];
+  for (let i = 0; i < 28; i++) rows.push({ label: NUTRI_DEFS[i][0], unit: NUTRI_DEFS[i][1], val: t[i], need: NUTRI_DEFS[i][2], role: roles[i] || "" });
+  rows.sort((a, b) => (a.val / a.need) - (b.val / b.need));
+  box.innerHTML = rows.map(r => {
+    const pct = Math.round(r.val / r.need * 100);
     const color = pct >= 100 ? "#2f7d4f" : pct >= 50 ? "#d69e2e" : "#c05621";
     return '<div class="macro-row">' +
       '<div class="macro-head"><span class="macro-name">' + r.label + ' <span class="macro-sub">— ' + r.role + '</span></span>' +
-      '<span><span class="macro-val">' + (val < 10 ? Math.round(val * 10) / 10 : Math.round(val)).toLocaleString("fr-FR") + ' ' + r.unit + '</span> <span class="macro-kcal">' + pct + ' % du besoin (' + need + ' ' + r.unit + ')</span></span></div>' +
+      '<span><span class="macro-val">' + (r.val < 10 ? Math.round(r.val * 10) / 10 : Math.round(r.val)).toLocaleString("fr-FR") + ' ' + r.unit + '</span> <span class="macro-kcal">' + pct + ' % du besoin (' + r.need + ' ' + r.unit + ')</span></span></div>' +
       '<div class="kcal-cat-bar"><span class="kcal-cat-fill" style="width:' + Math.min(100, pct) + '%;background:' + color + '"></span></div>' +
     '</div>';
-  }).join("") + '<p class="legend">Besoins indicatifs pour 1 jour de cyclotourisme. Sources variées = micro-nutriments variés : variez les familles d\'aliments.</p>';
+  }).join("") + '<p class="legend">Besoins indicatifs pour 1 jour de cyclotourisme. Sources variées = nutriments variés : variez les familles d\'aliments.</p>';
 }
 function coverageBlock(totalKcal) {
   const needs = bioNeeds();
@@ -1204,8 +1271,8 @@ function dayNutrition(items) {
     m.f += mac[2] * u.kf * it.qty;
     const w = weightOf(it.name);
     const factor = u.label === "g" ? it.qty / 100 : ((w || 100) * (u.label === "kg" ? 10 : u.label === "L" ? 10 : 1)) * it.qty / 100;
-    const mi = microOf(it.name);
-    for (let i = 0; i < 5; i++) m.micro[i] += mi[i] * factor;
+    const mi = nutriOf(it.name);
+    for (let i = 0; i < 28; i++) m.micro[i] += mi[i] * factor;
   }
   m.kcal = Math.round(m.kcal); m.p = Math.round(m.p); m.c = Math.round(m.c); m.f = Math.round(m.f);
   return m;
@@ -1260,13 +1327,32 @@ const DEFICIENCY_FIXES = {
   2: ["P\u00e2tes compl\u00e8tes", "Riz", "Pain complet", "Flocons d'avoine", "Bananes", "Muesli", "Barres de c\u00e9r\u00e9ales"],
   3: ["Huile d'olive", "Noix", "Amandes", "Beurre", "Fromage", "Avocats", "Chocolat noir (>70%)"],
   4: ["Oranges", "Kiwi", "Poivrons", "Brocoli", "Fraises", "Citrons", "Chou kale"],
-  5: ["Lentilles", "\u00c9pinards", "B\u0153uf s\u00e9ch\u00e9", "Sardines", "\u0152ufs", "Pois chiches", "Chou kale"],
-  6: ["Fromage", "Yaourt", "Lait", "Brocciu", "Sardines", "\u00c9pinards", "Amandes"],
-  7: ["Amandes", "Noix", "\u00c9pinards", "Lentilles", "Bananes", "Chou kale", "Graines de chia"],
-  8: ["Lentilles", "Pois chiches", "Pain complet", "Flocons d'avoine", "Pommes", "Chou", "Carottes"],
+  5: ["Pain complet", "Flocons d'avoine", "Lentilles", "Pois chiches", "\u00c9pinards", "Noisettes"],
+  6: ["Lait", "Yaourt", "Fromage", "\u0152ufs", "Champignons de Paris", "Avocats"],
+  7: ["Thon en conserve", "Poulet", "P\u00e2tes compl\u00e8tes", "Pommes de terre", "Flocons d'avoine", "Champignons de Paris"],
+  8: ["\u0152ufs", "Avocats", "Champignons de Paris", "Poulet", "Pois chiches", "Brocoli"],
+  9: ["Bananes", "Pommes de terre", "\u00c9pinards", "Avocats", "Noix", "Pois chiches"],
+  10: ["\u0152ufs", "Amandes", "Noisettes", "Champignons de Paris", "Avocats", "Chou kale"],
+  11: ["\u00c9pinards", "Chou kale", "Brocoli", "Lentilles", "Pois chiches", "Flocons d'avoine"],
+  12: ["Sardines", "Maquereau", "Thon en conserve", "Saumon", "\u0152ufs", "Lait"],
+  13: ["Fromage", "Yaourt", "Lait", "Brocciu", "Sardines", "\u00c9pinards", "Amandes"],
+  14: ["Fromage", "Sardines", "\u0152ufs", "Lentilles", "Pois chiches", "Amandes"],
+  15: ["Amandes", "Noix", "\u00c9pinards", "Lentilles", "Bananes", "Chou kale", "Graines de chia"],
+  16: ["Bananes", "Pommes de terre", "\u00c9pinards", "Avocats", "Chou kale", "Tomates", "Pois chiches"],
+  17: ["Poisson fum\u00e9", "Fromage", "Pain complet", "Olives", "\u0152ufs"],
+  18: ["Olives", "Poisson fum\u00e9", "Fromage", "\u0152ufs"],
+  19: ["Lentilles", "\u00c9pinards", "B\u0153uf s\u00e9ch\u00e9", "Sardines", "\u0152ufs", "Pois chiches", "Chou kale"],
+  20: ["Fromage", "\u0152ufs", "Poulet", "Lentilles", "Pois chiches", "Amandes", "Graines de chia"],
+  21: ["Chocolat noir (>70%)", "Noix", "Amandes", "Graines de chia", "Lentilles"],
+  22: ["Noix", "Amandes", "Flocons d'avoine", "Pain complet", "Chou kale", "\u00c9pinards"],
+  23: ["Thon en conserve", "Sardines", "\u0152ufs", "Poisson fum\u00e9"],
+  24: ["Poisson fum\u00e9", "\u0152ufs", "Lait", "Fromage"],
+  25: ["Brocoli", "\u00c9pinards", "Champignons de Paris", "Pommes de terre"],
+  26: ["Lentilles", "Pois chiches", "\u0152ufs", "C\u00e9r\u00e9ales compl\u00e8tes"],
+  27: ["Lentilles", "Pois chiches", "Pain complet", "Flocons d'avoine", "Pommes", "Chou", "Carottes"],
 };
 function renderDeficiencyFixes(deficitIdxs) {
-  const chips = deficitIdxs.flatMap(idx => (DEFICIENCY_FIXES[idx] || []).slice(0, 4).map(n =>
+  const chips = deficitIdxs.flatMap(idx => (DEFICIENCY_FIXES[idx <= 3 ? idx : idx - 4] || []).slice(0, 4).map(n =>
     '<button class="defix-chip" data-defix="' + n.replace(/"/g, "&quot;") + '">+ ' + n + '</button>'
   ));
   const uniq = [...new Set(chips)];
@@ -1278,7 +1364,7 @@ const REPORT_NUTRIENTS = [
   { key: "c", label: "🍟 Glucides", unit: "g", get: d => d.n.c, need: nd => nd.carbs },
   { key: "f", label: "🧈 Lipides", unit: "g", get: d => d.n.f, need: nd => nd.fat },
 ];
-for (let i = 0; i < 5; i++) REPORT_NUTRIENTS.push({ key: "micro" + i, label: REP_MICRO[i][0], unit: REP_MICRO[i][1], get: d => d.n.micro[i], need: () => MICRO_NEEDS[i][0] });
+for (let i = 0; i < 28; i++) REPORT_NUTRIENTS.push({ key: "micro" + i, label: NUTRI_DEFS[i][0], unit: NUTRI_DEFS[i][1], get: d => d.n.micro[i], need: () => NUTRI_DEFS[i][2] });
 let repNutrientIdx = 0;
 function renderReport() {
   const { y, m, days } = monthDays();
@@ -1291,7 +1377,7 @@ function renderReport() {
   const tot = { kcal: 0, p: 0, c: 0, f: 0, micro: [0, 0, 0, 0, 0] };
   for (const d of logged) {
     tot.kcal += d.n.kcal; tot.p += d.n.p; tot.c += d.n.c; tot.f += d.n.f;
-    for (let i = 0; i < 5; i++) tot.micro[i] += d.n.micro[i];
+    for (let i = 0; i < 28; i++) tot.micro[i] += d.n.micro[i];
   }
   const nDays = logged.length;
   const avg = { kcal: Math.round(tot.kcal / nDays), p: Math.round(tot.p / nDays), c: Math.round(tot.c / nDays), f: Math.round(tot.f / nDays), micro: tot.micro.map(v => v / nDays) };
@@ -1302,7 +1388,7 @@ function renderReport() {
     { label: "🍟 Glucides", unit: "g", val: avg.c, need: dailyNeeds.carbs },
     { label: "🧈 Lipides", unit: "g", val: avg.f, need: dailyNeeds.fat },
   ];
-  for (let i = 0; i < 5; i++) rows.push({ label: REP_MICRO[i][0], unit: REP_MICRO[i][1], val: avg.micro[i], need: MICRO_NEEDS[i][0] });
+  for (let i = 0; i < 28; i++) rows.push({ label: NUTRI_DEFS[i][0], unit: NUTRI_DEFS[i][1], val: avg.micro[i], need: NUTRI_DEFS[i][2] });
   const deficits = rows.filter(r => r.val < r.need * 0.75);
   let htmlOut = '<p style="font-size:.82rem;color:var(--muted);margin:4px 0 12px">' + nDays + ' journ\u00e9e' + (nDays > 1 ? "s" : "") + ' enregistr\u00e9e' + (nDays > 1 ? "s" : "") + ' \u00b7 moyennes par jour vs besoins (biom\u00e9trie + effort).</p>';
   if (deficits.length) {
