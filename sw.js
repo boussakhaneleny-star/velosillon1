@@ -1,5 +1,5 @@
 "use strict";
-const CACHE = "velosillon-v5";
+const CACHE = "velosillon-v6";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest"];
 const NETWORK_FIRST = ["./", "./index.html"];
 
